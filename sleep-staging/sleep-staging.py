@@ -1,3 +1,4 @@
+# %%
 ### 0. Setting up the environment ###
 
 # GPU or CPU?
@@ -27,15 +28,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-
+# %%
 ### 1. Loading data ###
 
 import mne
 mne.set_log_level('ERROR')
 
 # number of subjects, between 1 and 64, files and annotations paths
-# subjects = list(range(30))
-subjects = list(range(35))+list(range(36, 61))
+subjects = [10, 45, 46, 47, 48, 49]
+# subjects = list(range(33))+list(range(36, 62))
 fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in subjects]
 apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in subjects]
 
@@ -105,22 +106,21 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
 raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
 print('All recordings have been loaded in raws')
 
-# Plot a recording as a sanity check
-raws[0].plot().savefig('plot11-mass-plot')
+# # Plot a recording as a sanity check
+# raws[0].plot().savefig('plots/1-mass-plot')
 
-
-
+# %%
 ### 2. Preprocessing raw data ###
 
-# Lowpass filter with cutoff frequency of 30Hz
-l_freq, h_freq = None, 30
-for raw in raws:
-    raw.load_data().filter(l_freq, h_freq)  # filtering happens in-place
+# # Lowpass filter with cutoff frequency of 30Hz
+# l_freq, h_freq = None, 30
+# for raw in raws:
+#     raw.load_data().filter(l_freq, h_freq)  # filtering happens in-place
 
-# Plot the power spectrum of a recording as sanity check
-raws[0].plot_psd().savefig('plot12-mass-psd')
+# # Plot the power spectrum of a recording as sanity check
+# raws[0].plot_psd().savefig('plots/2-mass-psd')
 
-print('Lowpass filter ok, cf psd plot')
+# print('Lowpass filter ok, cf psd plot')
 
 def extract_epochs(raw, chunk_duration=30.):
     """Extract non-overlapping epochs from raw data.
@@ -231,7 +231,7 @@ dataset = ConcatDataset(all_datasets)
 
 print('Windows have been extracted and wrapped up into Pytorch datasets')
 
-
+# %%
 ### 3. Making train, valid and test splits ###
 
 def pick_recordings(dataset, test_size):
@@ -300,7 +300,7 @@ torch.manual_seed(87)
 np.random.seed(87)
 
 # Use recording 1 of subjects 0-9 as test set
-test_size = 10
+test_size = 1
 test_ds, train_ds = pick_recordings(dataset, test_size)
 
 # Split remaining recordings into training and validation sets
@@ -312,19 +312,19 @@ print(f'Training: {len(train_ds)}')
 print(f'Validation: {len(valid_ds)}')
 print(f'Test: {len(test_ds)}')
 
-classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
-y_train = pd.Series([y for _, y in train_ds]).map(classes_mapping)
-ax = y_train.value_counts().plot(kind='barh')
-ax.set_xlabel('Number of training examples')
-ax.set_ylabel('Sleep stage')
-ax.figure.savefig('plot13-mass-class-imbalance')
+# classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
+# y_train = pd.Series([y for _, y in train_ds]).map(classes_mapping)
+# ax = y_train.value_counts().plot(kind='barh')
+# ax.set_xlabel('Number of training examples')
+# ax.set_ylabel('Sleep stage')
+# ax.figure.savefig('plots/3-mass-class-imbalance')
 
 train_y = np.concatenate([ds.epochs_labels for ds in train_ds.datasets])
 class_weights = compute_class_weight('balanced', classes=np.unique(train_y), y=train_y)
 print(class_weights)
 
 
-
+# %%
 ### 4. Creating the neural network ###
 
 class SleepStagerChambon2018(nn.Module):
@@ -421,7 +421,7 @@ print(f'Using device \'{device}\'.')
 model = model.to(device)
 
 
-
+# %%
 ### 5. Train and monitor network ###
 
 # Create dataloaders
@@ -430,7 +430,7 @@ valid_batch_size = 256  # Can be made as large as what fits in memory; won't imp
 num_workers = 0  # Number of processes to use for the data loading process; 0 is the main Python process
 
 loader_train = DataLoader(
-    train_ds, batch_size=train_batch_size, shuffle=True, num_workers=num_workers)
+    train_ds, batch_size=train_batch_size, shuffle=True, num_workers=num_workers, drop_last=True)
 loader_valid = DataLoader(
     valid_ds, batch_size=valid_batch_size, shuffle=False, num_workers=num_workers)
 loader_test = DataLoader(
@@ -578,10 +578,10 @@ best_model, history = train(
 history_df = pd.DataFrame(history)
 ax1 = history_df.plot(x='epoch', y=['train_loss', 'valid_loss'], marker='o')
 ax1.set_ylabel('Loss')
-ax1.figure.savefig('plot14-mass-learning-curve-1')
+ax1.figure.savefig('plots/4-mass-learning-curve-1')
 ax2 = history_df.plot(x='epoch', y=['train_perf', 'valid_perf'], marker='o')
 ax2.set_ylabel('Cohen\'s kappa')
-ax2.figure.savefig('plot14-mass-learning-curve-2')
+ax2.figure.savefig('plots/4-mass-learning-curve-2')
 
 # Compute test performance
 
@@ -606,7 +606,7 @@ test_kappa = cohen_kappa_score(y_true, y_pred)
 print(f'Test balanced accuracy: {test_bal_acc:0.3f}')
 print(f'Test Cohen\'s kappa: {test_kappa:0.3f}')
 
-
+# %%
 ### 6. Visualising results ###
 
 def plot_confusion_matrix(conf_mat, classes_mapping):
@@ -635,7 +635,7 @@ def plot_confusion_matrix(conf_mat, classes_mapping):
     return fig, ax
 
 conf_mat = confusion_matrix(y_true, y_pred)
-plot_confusion_matrix(conf_mat, classes_mapping).savefig('plot15-mass-confusion-matrix')
+plot_confusion_matrix(conf_mat, classes_mapping).savefig('plots/5-mass-confusion-matrix')
 
 mask = rec_ids == 0  # pick a recording number
 
@@ -649,4 +649,4 @@ ax.set_yticklabels(['W', 'N1', 'N2', 'N3', 'R'])
 ax.set_xlabel('Time (h)')
 ax.set_title('Hypnogram')
 ax.legend()
-ax.figure.savefig('plot16-mass-hypnogram')
+ax.figure.savefig('plots/6-mass-hypnogram')
