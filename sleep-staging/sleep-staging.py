@@ -34,21 +34,21 @@ import matplotlib.pyplot as plt
 import mne
 mne.set_log_level('ERROR')
 
-subjects = [1, 47, 48, 50]
-rec_nb = []
-for i in subjects:
-    assert i not in {0, 36, 43, 49} 
-    assert i <= 64
-    if i < 10: 
-        rec_nb.append('01-03-000{}'.format(i))
-    else: 
-        rec_nb.append('01-03-00{}'.format(i))
-fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
-apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".format(i) for i in rec_nb]
+# subjects = [1, 47, 48, 50]
+# rec_nb = []
+# for i in subjects:
+#     assert i not in {0, 36, 43, 49} 
+#     assert i <= 64
+#     if i < 10: 
+#         rec_nb.append('01-03-000{}'.format(i))
+#     else: 
+#         rec_nb.append('01-03-00{}'.format(i))
+# fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
+# apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".format(i) for i in rec_nb]
 
-# nb_subjects = [0, 1]
-# fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in nb_subjects]
-# apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in nb_subjects]
+nb_subjects = list(range(30))
+fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in nb_subjects]
+apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in nb_subjects]
 # print(apaths, fpaths)
 
 def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True, 
@@ -117,21 +117,21 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
 raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
 print('All recordings have been loaded in raws')
 
-# # Plot a recording as a sanity check
-# raws[0].plot().savefig('plots/1-mass-rawplot')
+# Plot a recording as a sanity check
+raws[0].plot().savefig('plots/1-mass-rawplot')
 
 # %%
 ### 2. Preprocessing raw data ###
 
-# # Lowpass filter with cutoff frequency of 30Hz
-# l_freq, h_freq = None, 30
-# for raw in raws:
-#     raw.load_data().filter(l_freq, h_freq)  # filtering happens in-place
+# Lowpass filter with cutoff frequency of 30Hz
+l_freq, h_freq = None, 30
+for raw in raws:
+    raw.load_data().filter(l_freq, h_freq)  # filtering happens in-place
 
-# # Plot the power spectrum of a recording as sanity check
-# raws[0].plot_psd().savefig('plots/2-mass-psd')
+# Plot the power spectrum of a recording as sanity check
+raws[0].plot_psd().savefig('plots/2-mass-psd')
 
-# print('Lowpass filter ok, cf psd plot')
+print('Lowpass filter ok, cf psd plot')
 
 def extract_epochs(raw, chunk_duration=30.):
     """Extract non-overlapping epochs from raw data.
@@ -232,11 +232,13 @@ def scale(X):
 
 # Extract windows from each recording and wrap them into Pytorch datasets
 ## Apply windowing and move to pytorch dataset
-all_datasets = []
-for raw in raws: 
-    print(raw.info['subject_info']['id'])
-    all_datasets.append(EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
-                              rec_nb=raw.info['subject_info']['rec_id'], transform=scale))
+# all_datasets = []
+# for raw in raws: 
+#     print(raw.info['subject_info']['id'])
+#     all_datasets.append(EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
+#                               rec_nb=raw.info['subject_info']['rec_id'], transform=scale))
+all_datasets = [EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
+                              rec_nb=raw.info['subject_info']['rec_id'], transform=scale) for raw in raws]
 ## Concatenate into a single dataset
 dataset = ConcatDataset(all_datasets)
 
@@ -311,7 +313,7 @@ torch.manual_seed(87)
 np.random.seed(87)
 
 # Use recording 1 of subjects 0-9 as test set
-test_size = 1
+test_size = 10
 test_ds, train_ds = pick_recordings(dataset, test_size)
 
 # Split remaining recordings into training and validation sets
