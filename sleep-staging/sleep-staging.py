@@ -34,11 +34,22 @@ import matplotlib.pyplot as plt
 import mne
 mne.set_log_level('ERROR')
 
-# number of subjects, between 1 and 64, files and annotations paths
-subjects = [10, 45, 46, 47, 48, 49]
-# subjects = list(range(33))+list(range(36, 62))
-fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in subjects]
-apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in subjects]
+subjects = [1, 47, 48, 50]
+rec_nb = []
+for i in subjects:
+    assert i not in {0, 36, 43, 49} 
+    assert i <= 64
+    if i < 10: 
+        rec_nb.append('01-03-000{}'.format(i))
+    else: 
+        rec_nb.append('01-03-00{}'.format(i))
+fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
+apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".format(i) for i in rec_nb]
+
+# nb_subjects = [0, 1]
+# fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in nb_subjects]
+# apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in nb_subjects]
+# print(apaths, fpaths)
 
 def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True, 
                              crop_wake_mins=0):
@@ -107,7 +118,7 @@ raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
 print('All recordings have been loaded in raws')
 
 # # Plot a recording as a sanity check
-# raws[0].plot().savefig('plots/1-mass-plot')
+# raws[0].plot().savefig('plots/1-mass-rawplot')
 
 # %%
 ### 2. Preprocessing raw data ###
