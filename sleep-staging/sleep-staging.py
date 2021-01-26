@@ -1,5 +1,5 @@
 # %%
-### 0. Setting up the environment ###
+# 0. Setting up the environment
 
 # GPU or CPU?
 import torch
@@ -7,7 +7,7 @@ if torch.cuda.is_available():
     print('CUDA-enabled GPU found. Training should be faster.')
     devide = 'cuda'
 else:
-    print('No GPU found. Training will be carried out on CPU, which might be slower.')
+    print('No GPU, training will be carried out on CPU, might be slower')
     device = 'cpu'
 
 from torch import nn
@@ -16,12 +16,10 @@ from torch.optim import Adam
 from torch.utils.data import Dataset, ConcatDataset, DataLoader
 from sklearn.model_selection import LeavePGroupsOut
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, confusion_matrix
+from sklearn.metrics import balanced_accuracy_score, \
+                            cohen_kappa_score, \
+                            confusion_matrix
 
-
-
-import os
-import glob
 import copy
 import numpy as np
 import pandas as pd
@@ -29,32 +27,36 @@ import matplotlib.pyplot as plt
 
 
 # %%
-### 1. Loading data ###
+# 1. Loading data
 
 import mne
 mne.set_log_level('ERROR')
 
-# subjects = [1, 47, 48, 50]
-# rec_nb = []
-# for i in subjects:
-#     assert i not in {0, 36, 43, 49} 
-#     assert i <= 64
-#     if i < 10: 
-#         rec_nb.append('01-03-000{}'.format(i))
-#     else: 
-#         rec_nb.append('01-03-00{}'.format(i))
-# fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
-# apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".format(i) for i in rec_nb]
+subjects = [x for x in list(range(1, 47)) if x not in {36, 40, 43}]
+rec_nb = []
+for i in subjects:
+    assert i not in {0, 36, 43, 49}
+    assert i <= 64
+    if i < 10:
+        rec_nb.append('01-03-000{}'.format(i))
+    else:
+        rec_nb.append('01-03-00{}'.format(i))
+fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
+apaths = ["/storage/store/data/mass/SS3/annotations/ \
+          {} Annotations.edf".format(i) for i in rec_nb]
 
-nb_subjects = list(range(30))
-fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in nb_subjects]
-apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in nb_subjects]
+# nb_subjects = 30
+# fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/ \
+#           *.edf"))[i] for i in nb_subjects]
+# apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/ \
+#           annotations/*.edf"))[i] for i in nb_subjects]
 # print(apaths, fpaths)
 
-def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True, 
+
+def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
                              crop_wake_mins=0):
     """Load a recording from the Sleep Physionet dataset.
-    
+
     Parameters
     ----------
     fpath : str
@@ -62,15 +64,15 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
     apath : str
         path to the .edf file containing the annotations.
     load_eeg_only : bool
-        If True, only keep EEG channels and discard other modalities 
+        If True, only keep EEG channels and discard other modalities
         (speeds up loading).
     crop_wake_mins : float
         Number of minutes of wake events before and after sleep events.
-    
+
     Returns
     -------
     mne.io.Raw :
-        Raw object containing the EEG and annotations.        
+        Raw object containing the EEG and annotations.
     """
     mapping = {'ECG I': 'ecg',
                'EOG Right Horiz': 'eog',
@@ -79,39 +81,40 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
                'EMG Chin2': 'emg',
                'EMG Chin3': 'emg'}
     exclude = mapping.keys() if load_eeg_only else ()
-    
+
     record_nb = fpath[29:39]
     assert(record_nb == apath[41:51])
     # print('record_nb = annot_nb = ', record_nb)
-    
+
     raw = mne.io.read_raw_edf(fpath, exclude=exclude)
     annots = mne.read_annotations(apath)
     raw.set_annotations(annots, emit_warning=False)
     if not load_eeg_only:
         raw.set_channel_types(mapping)
-    
+
     if crop_wake_mins > 0:  # Cut start and end Wake periods
         # Find first and last sleep stages
-        mask = [x[-1] in ['1', '2', '3', '4', 'R'] 
+        mask = [x[-1] in ['1', '2', '3', '4', 'R']
                 for x in annots.description]
         sleep_event_inds = np.where(mask)[0]
 
         # Crop raw
         tmin = annots[int(sleep_event_inds[0])]['onset'] - \
-               crop_wake_mins * 60
+            crop_wake_mins * 60
         tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
-               crop_wake_mins * 60
+            crop_wake_mins * 60
         raw.crop(tmin=tmin, tmax=tmax)
-    
+
     # Rename EEG channels
-    ch_names = {i: i.replace('EEG ', '') 
+    ch_names = {i: i.replace('EEG ', '')
                 for i in raw.ch_names if 'EEG' in i}
     mne.rename_channels(raw.info, ch_names)
-    
+
     # Save subject and recording information in raw.info
     raw.info['subject_info'] = {'id': record_nb, 'rec_id': record_nb}
-   
+
     return raw
+
 
 # Load recordings
 raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
@@ -121,8 +124,7 @@ print('All recordings have been loaded in raws')
 raws[0].plot().savefig('plots/1-mass-rawplot')
 
 # %%
-### 2. Preprocessing raw data ###
-
+# 2. Preprocessing raw data
 # Lowpass filter with cutoff frequency of 30Hz
 l_freq, h_freq = None, 30
 for raw in raws:
@@ -133,16 +135,17 @@ raws[0].plot_psd().savefig('plots/2-mass-psd')
 
 print('Lowpass filter ok, cf psd plot')
 
+
 def extract_epochs(raw, chunk_duration=30.):
     """Extract non-overlapping epochs from raw data.
-    
+
     Parameters
     ----------
     raw : mne.io.Raw
         Raw data object to be windowed.
     chunk_duration : float
         Length of a window.
-    
+
     Returns
     -------
     np.ndarray
@@ -159,7 +162,7 @@ def extract_epochs(raw, chunk_duration=30.):
         'Sleep stage R': 5}
 
     events, _ = mne.events_from_annotations(
-        raw, event_id=annotation_desc_2_event_id, 
+        raw, event_id=annotation_desc_2_event_id,
         chunk_duration=chunk_duration)
 
     # create a new event_id that unifies stages 3 and 4
@@ -174,12 +177,13 @@ def extract_epochs(raw, chunk_duration=30.):
     picks = mne.pick_types(raw.info, eeg=True, eog=True)
     epochs = mne.Epochs(raw=raw, events=events, picks=picks, preload=True,
                         event_id=event_id, tmin=0., tmax=tmax, baseline=None)
-    
+
     return epochs.get_data(), epochs.events[:, 2] - 1
+
 
 class EpochsDataset(Dataset):
     """Class to expose an MNE Epochs object as PyTorch dataset.
-    
+
     Parameters
     ----------
     epochs_data : np.ndarray
@@ -194,7 +198,8 @@ class EpochsDataset(Dataset):
         The function to eventually apply to each epoch
         for preprocessing (e.g. scaling). Defaults to None.
     """
-    def __init__(self, epochs_data, epochs_labels, subj_nb=None, 
+
+    def __init__(self, epochs_data, epochs_labels, subj_nb=None,
                  rec_nb=None, transform=None):
         assert len(epochs_data) == len(epochs_labels)
         self.epochs_data = epochs_data
@@ -212,16 +217,16 @@ class EpochsDataset(Dataset):
             X = self.transform(X)
         X = torch.as_tensor(X[None, ...])
         return X, y
-    
+
 
 def scale(X):
     """Standard scaling of data along the last dimention.
-    
+
     Parameters
     ----------
     X : array, shape (n_channels, n_times)
         The input signals.
-        
+
     Returns
     -------
     X_t : array, shape (n_channels, n_times)
@@ -230,43 +235,49 @@ def scale(X):
     X -= np.mean(X, axis=1, keepdims=True)
     return X / np.std(X, axis=1, keepdims=True)
 
+
 # Extract windows from each recording and wrap them into Pytorch datasets
-## Apply windowing and move to pytorch dataset
+# Apply windowing and move to pytorch dataset
 # all_datasets = []
-# for raw in raws: 
+# for raw in raws:
 #     print(raw.info['subject_info']['id'])
-#     all_datasets.append(EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
-#                               rec_nb=raw.info['subject_info']['rec_id'], transform=scale))
-all_datasets = [EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
-                              rec_nb=raw.info['subject_info']['rec_id'], transform=scale) for raw in raws]
-## Concatenate into a single dataset
+#     all_datasets.append(EpochsDataset(*extract_epochs(raw),
+#                               subj_nb=raw.info['subject_info']['id'],
+#                               rec_nb=raw.info['subject_info']['rec_id'],
+#                               transform=scale))
+all_datasets = [EpochsDataset(*extract_epochs(raw),
+                              subj_nb=raw.info['subject_info']['id'],
+                              rec_nb=raw.info['subject_info']['rec_id'],
+                              transform=scale) for raw in raws]
+# Concatenate into a single dataset
 dataset = ConcatDataset(all_datasets)
 
 print('Windows have been extracted and wrapped up into Pytorch datasets')
 
 # %%
-### 3. Making train, valid and test splits ###
+# 3. Making train, valid and test splits
+
 
 def pick_recordings(dataset, test_size):
     """Pick recordings using subject and recording numbers.
-    
+
     Parameters
     ----------
     dataset : ConcatDataset
-        The dataset to pick recordings from.        
+        The dataset to pick recordings from.
     test_size : int
         nb of recordings in testing dataset.
-        
+
     Returns
     -------
     ConcatDataset
         The picked recordings.
     ConcatDataset | None
-        The remaining recordings. None if all recordings from 
+        The remaining recordings. None if all recordings from
         `dataset` were picked.
     """
     pick_idx = list(range(test_size))
-                
+
     remaining_idx = np.setdiff1d(
         range(len(dataset.datasets)), pick_idx)
 
@@ -276,13 +287,13 @@ def pick_recordings(dataset, test_size):
             [dataset.datasets[i] for i in remaining_idx])
     else:
         remaining_ds = None
-    
+
     return pick_ds, remaining_ds
-    
+
 
 def train_test_split(dataset, n_groups, split_by='subj_nb'):
     """Split dataset into train and test keeping n_groups out in test.
-    
+
     Parameters
     ----------
     dataset : ConcatDataset
@@ -291,7 +302,7 @@ def train_test_split(dataset, n_groups, split_by='subj_nb'):
         The number of groups to leave out.
     split_by : 'subj_nb' | 'rec_nb'
         Property to use to split dataset.
-        
+
     Returns
     -------
     ConcatDataset
@@ -305,8 +316,9 @@ def train_test_split(dataset, n_groups, split_by='subj_nb'):
 
     train_ds = ConcatDataset([dataset.datasets[i] for i in train_idx])
     test_ds = ConcatDataset([dataset.datasets[i] for i in test_idx])
-        
+
     return train_ds, test_ds
+
 
 # We seed the random number generators to make our splits reproducible
 torch.manual_seed(87)
@@ -318,14 +330,15 @@ test_ds, train_ds = pick_recordings(dataset, test_size)
 
 # Split remaining recordings into training and validation sets
 n_subjects_valid = max(1, int(len(train_ds.datasets) * 0.2))
-train_ds, valid_ds = train_test_split(train_ds, n_subjects_valid, split_by='subj_nb')
+train_ds, valid_ds = train_test_split(train_ds, n_subjects_valid,
+                                      split_by='subj_nb')
 
 print('Number of examples in each set:')
 print(f'Training: {len(train_ds)}')
 print(f'Validation: {len(valid_ds)}')
 print(f'Test: {len(test_ds)}')
 
-# classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
+classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 # y_train = pd.Series([y for _, y in train_ds]).map(classes_mapping)
 # ax = y_train.value_counts().plot(kind='barh')
 # ax.set_xlabel('Number of training examples')
@@ -333,18 +346,20 @@ print(f'Test: {len(test_ds)}')
 # ax.figure.savefig('plots/3-mass-class-imbalance')
 
 train_y = np.concatenate([ds.epochs_labels for ds in train_ds.datasets])
-class_weights = compute_class_weight('balanced', classes=np.unique(train_y), y=train_y)
+class_weights = compute_class_weight('balanced', classes=np.unique(train_y),
+                                     y=train_y)
 print(class_weights)
 
 
 # %%
-### 4. Creating the neural network ###
+# 4. Creating the neural network
+
 
 class SleepStagerChambon2018(nn.Module):
     """Sleep staging architecture from [1]_.
-    
+
     Convolutional neural network for sleep staging described in [1]_.
-    
+
     Parameters
     ----------
     n_channels : int
@@ -365,7 +380,7 @@ class SleepStagerChambon2018(nn.Module):
         Size of the input, in seconds.
     dropout : float
         Dropout rate before the output dense layer.
-        
+
     References
     ----------
     .. [1] Chambon, S., Galtier, M. N., Arnal, P. J., Wainrib, G., &
@@ -412,7 +427,7 @@ class SleepStagerChambon2018(nn.Module):
 
     def forward(self, x):
         """Forward pass.
-        
+
         Parameters
         ---------
         x: torch.Tensor
@@ -425,6 +440,7 @@ class SleepStagerChambon2018(nn.Module):
         x = self.feature_extractor(x)
         return self.fc(x.flatten(start_dim=1))
 
+
 sfreq = raws[0].info['sfreq']  # Sampling frequency
 n_channels = raws[0].info['nchan']  # Number of channels
 
@@ -435,24 +451,30 @@ model = model.to(device)
 
 
 # %%
-### 5. Train and monitor network ###
+# 5. Train and monitor network
 
 # Create dataloaders
 train_batch_size = 128  # Important hyperparameter
-valid_batch_size = 256  # Can be made as large as what fits in memory; won't impact performance
-num_workers = 0  # Number of processes to use for the data loading process; 0 is the main Python process
+valid_batch_size = 256  # Can be made as large as what fits in memory
+#                         won't impact performance
+num_workers = 0  # Number of processes to use for the data loading process;
+#                         0 is the main Python process
 
 loader_train = DataLoader(
-    train_ds, batch_size=train_batch_size, shuffle=True, num_workers=num_workers, drop_last=True)
+    train_ds, batch_size=train_batch_size, shuffle=True,
+    num_workers=num_workers)
 loader_valid = DataLoader(
-    valid_ds, batch_size=valid_batch_size, shuffle=False, num_workers=num_workers)
+    valid_ds, batch_size=valid_batch_size, shuffle=False,
+    num_workers=num_workers)
 loader_test = DataLoader(
-    test_ds, batch_size=valid_batch_size, shuffle=False, num_workers=num_workers)
+    test_ds, batch_size=valid_batch_size, shuffle=False,
+    num_workers=num_workers)
+
 
 def _do_train(model, loader, optimizer, criterion, device, metric):
     # training loop
     model.train()
-    
+
     train_loss = np.zeros(len(loader))
     y_pred_all, y_true_all = list(), list()
     for idx_batch, (batch_x, batch_y) in enumerate(loader):
@@ -465,23 +487,23 @@ def _do_train(model, loader, optimizer, criterion, device, metric):
 
         loss.backward()
         optimizer.step()
-        
+
         y_pred_all.append(torch.argmax(output, axis=1).cpu().numpy())
         y_true_all.append(batch_y.cpu().numpy())
 
         train_loss[idx_batch] = loss.item()
-        
+
     y_pred = np.concatenate(y_pred_all)
     y_true = np.concatenate(y_true_all)
     perf = metric(y_true, y_pred)
-    
+
     return np.mean(train_loss), perf
-        
+
 
 def _validate(model, loader, criterion, device, metric):
     # validation loop
     model.eval()
-    
+
     val_loss = np.zeros(len(loader))
     y_pred_all, y_true_all = list(), list()
     with torch.no_grad():
@@ -492,10 +514,10 @@ def _validate(model, loader, criterion, device, metric):
 
             loss = criterion(output, batch_y)
             val_loss[idx_batch] = loss.item()
-            
+
             y_pred_all.append(torch.argmax(output, axis=1).cpu().numpy())
             y_true_all.append(batch_y.cpu().numpy())
-            
+
     y_pred = np.concatenate(y_pred_all)
     y_true = np.concatenate(y_true_all)
     perf = metric(y_true, y_pred)
@@ -503,10 +525,10 @@ def _validate(model, loader, criterion, device, metric):
     return np.mean(val_loss), perf
 
 
-def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs, 
+def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs,
           patience, device, metric=None):
     """Training function.
-    
+
     Parameters
     ----------
     model : instance of nn.Module
@@ -528,7 +550,7 @@ def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs,
     metric : None | callable
         Metric to use to evaluate performance on the training and
         validation sets. Defaults to balanced accuracy.
-        
+
     Returns
     -------
     best_model : instance of nn.Module
@@ -541,12 +563,12 @@ def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs,
     best_model = copy.deepcopy(model)
     waiting = 0
     history = list()
-    
+
     if metric is None:
         metric = balanced_accuracy_score
-        
+
     print('epoch \t train_loss \t valid_loss \t train_perf \t valid_perf')
-    print('-------------------------------------------------------------------')
+    print('---------------------------------------------------------------')
 
     for epoch in range(1, n_epochs + 1):
         train_loss, train_perf = _do_train(
@@ -554,10 +576,10 @@ def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs,
         valid_loss, valid_perf = _validate(
             model, loader_valid, criterion, device, metric=metric)
         history.append(
-            {'epoch': epoch, 
+            {'epoch': epoch,
              'train_loss': train_loss, 'valid_loss': valid_loss,
              'train_perf': train_perf, 'valid_perf': valid_perf})
-        
+
         print(f'{epoch} \t {train_loss:0.4f} \t {valid_loss:0.4f} '
               f'\t {train_perf:0.4f} \t {valid_perf:0.4f}')
 
@@ -578,14 +600,15 @@ def train(model, loader_train, loader_valid, optimizer, criterion, n_epochs,
 
     return best_model, history
 
+
 optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=0)
 criterion = CrossEntropyLoss(weight=torch.Tensor(class_weights).to(device))
 
 n_epochs = 10
 patience = 5
 best_model, history = train(
-    model, loader_train, loader_valid, optimizer, criterion, n_epochs, patience, 
-    device, metric=cohen_kappa_score)
+    model, loader_train, loader_valid, optimizer, criterion, n_epochs,
+    patience, device, metric=cohen_kappa_score)
 
 # Visualizing the learning curves
 history_df = pd.DataFrame(history)
@@ -607,7 +630,7 @@ for batch_x, batch_y in loader_test:
     output = model.forward(batch_x)
     y_pred_all.append(torch.argmax(output, axis=1).cpu().numpy())
     y_true_all.append(batch_y.cpu().numpy())
-    
+
 y_pred = np.concatenate(y_pred_all)
 y_true = np.concatenate(y_true_all)
 rec_ids = np.concatenate(  # indicates which recording each example comes from
@@ -620,7 +643,8 @@ print(f'Test balanced accuracy: {test_bal_acc:0.3f}')
 print(f'Test Cohen\'s kappa: {test_kappa:0.3f}')
 
 # %%
-### 6. Visualising results ###
+# 6. Visualising results
+
 
 def plot_confusion_matrix(conf_mat, classes_mapping):
     ticks = list(classes_mapping.keys())
@@ -639,16 +663,17 @@ def plot_confusion_matrix(conf_mat, classes_mapping):
 
     for i in range(len(ticks)):
         for j in range(len(ticks)):
-            text = ax.text(
-                j, i, conf_mat[i, j], ha='center', va='center', color='k')
+            ax.text(j, i, conf_mat[i, j], ha='center', va='center', color='k')
 
     fig.colorbar(im, ax=ax, fraction=0.05, label='# examples')
     fig.tight_layout()
-    
+
     return fig, ax
 
+
 conf_mat = confusion_matrix(y_true, y_pred)
-plot_confusion_matrix(conf_mat, classes_mapping).savefig('plots/5-mass-confusion-matrix')
+plot_confusion_matrix(conf_mat, classes_mapping). \
+            savefig('plots/5-mass-confusion-matrix')
 
 mask = rec_ids == 0  # pick a recording number
 

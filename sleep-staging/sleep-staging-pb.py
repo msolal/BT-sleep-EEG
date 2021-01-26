@@ -1,5 +1,5 @@
 # %%
-### 0. Setting up the environment ###
+# 0. Setting up the environment ###
 
 # GPU or CPU?
 import torch
@@ -7,7 +7,7 @@ if torch.cuda.is_available():
     print('CUDA-enabled GPU found. Training should be faster.')
     devide = 'cuda'
 else:
-    print('No GPU found. Training will be carried out on CPU, which might be slower.')
+    print('No GPU, training will be carried out on CPU, might be slower.')
     device = 'cpu'
 
 from torch import nn
@@ -16,41 +16,41 @@ from torch.optim import Adam
 from torch.utils.data import Dataset, ConcatDataset, DataLoader
 from sklearn.model_selection import LeavePGroupsOut
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, confusion_matrix
+from sklearn.metrics import balanced_accuracy_score, \
+                            cohen_kappa_score, \
+                            confusion_matrix
 
-
-
-import os
-import glob
 import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 # %%
-### 1. Loading data ###
+# 1. Loading data ###
 
 import mne
 mne.set_log_level('ERROR')
 
-# subjects = [1, 47, 48, 50]
-# rec_nb = []
-# for i in subjects:
-#     assert i not in {0, 36, 43, 49} 
-#     assert i <= 64
-#     if i < 10: 
-#         rec_nb.append('01-03-000{}'.format(i))
-#     else: 
-#         rec_nb.append('01-03-00{}'.format(i))
-# fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
-# apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".format(i) for i in rec_nb]
+subjects = [x for x in list(range(1, 47)) if x not in {36, 40, 43}]
+rec_nb = []
+for i in subjects:
+    assert i not in {0, 36, 43, 49} 
+    assert i <= 64
+    if i < 10: 
+        rec_nb.append('01-03-000{}'.format(i))
+    else: 
+        rec_nb.append('01-03-00{}'.format(i))
+fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
+apaths = ["/storage/store/data/mass/SS3/annotations/ \
+            {} Annotations.edf".format(i) for i in rec_nb]
 
-nb_subjects = list(range(5))+list(range(36,  42))
-fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/*.edf"))[i] for i in nb_subjects]
-apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/annotations/*.edf"))[i] for i in nb_subjects]
-print(fpaths)
-# print(apaths, fpaths)
+# nb_subjects = 30
+# fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/ \
+#           .edf"))[i] for i in nb_subjects]
+# apaths = [sorted(glob.glob("/storage/store/data/mass/SS3/ \
+#           annotations/*.edf"))[i] for i in nb_subjects]
+# # print(apaths, fpaths)
+
 
 def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True, 
                              crop_wake_mins=0):
@@ -98,21 +98,22 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
         sleep_event_inds = np.where(mask)[0]
 
         # Crop raw
-        tmin = annots[int(sleep_event_inds[0])]['onset'] - \
-               crop_wake_mins * 60
-        tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
-               crop_wake_mins * 60
+        tmin = annots[int(sleep_event_inds[0])]['onset'] - crop_wake_mins * 60
+        tmax = annots[int(sleep_event_inds[-1])]['onset'] + crop_wake_mins * 60
         raw.crop(tmin=tmin, tmax=tmax)
     
     # Rename EEG channels
     ch_names = {i: i.replace('EEG ', '') 
                 for i in raw.ch_names if 'EEG' in i}
     mne.rename_channels(raw.info, ch_names)
-    
+
+    print(record_nb)
+    print(raw.ch_names)
     # Save subject and recording information in raw.info
     raw.info['subject_info'] = {'id': record_nb, 'rec_id': record_nb}
    
     return raw
+
 
 # Load recordings
 raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
@@ -122,7 +123,7 @@ print('All recordings have been loaded in raws')
 # raws[0].plot().savefig('plots/1-mass-rawplot')
 
 # %%
-### 2. Preprocessing raw data ###
+# 2. Preprocessing raw data ###
 
 # # Lowpass filter with cutoff frequency of 30Hz
 # l_freq, h_freq = None, 30
@@ -133,6 +134,7 @@ print('All recordings have been loaded in raws')
 # raws[0].plot_psd().savefig('plots/2-mass-psd')
 
 print('Lowpass filter ok, cf psd plot')
+
 
 def extract_epochs(raw, chunk_duration=30.):
     """Extract non-overlapping epochs from raw data.
@@ -177,6 +179,7 @@ def extract_epochs(raw, chunk_duration=30.):
                         event_id=event_id, tmin=0., tmax=tmax, baseline=None)
     
     return epochs.get_data(), epochs.events[:, 2] - 1
+
 
 class EpochsDataset(Dataset):
     """Class to expose an MNE Epochs object as PyTorch dataset.
@@ -231,22 +234,28 @@ def scale(X):
     X -= np.mean(X, axis=1, keepdims=True)
     return X / np.std(X, axis=1, keepdims=True)
 
+
 # Extract windows from each recording and wrap them into Pytorch datasets
-## Apply windowing and move to pytorch dataset
+# Apply windowing and move to pytorch dataset
 # all_datasets = []
 # for raw in raws: 
 #     print(raw.info['subject_info']['id'])
-#     all_datasets.append(EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
-#                               rec_nb=raw.info['subject_info']['rec_id'], transform=scale))
-all_datasets = [EpochsDataset(*extract_epochs(raw), subj_nb=raw.info['subject_info']['id'], 
-                              rec_nb=raw.info['subject_info']['rec_id'], transform=scale) for raw in raws]
-## Concatenate into a single dataset
+#     all_datasets.append(EpochsDataset(*extract_epochs(raw), 
+#                               subj_nb=raw.info['subject_info']['id'], 
+#                               rec_nb=raw.info['subject_info']['rec_id'], 
+#                               transform=scale))
+all_datasets = [EpochsDataset(*extract_epochs(raw), 
+                              subj_nb=raw.info['subject_info']['id'], 
+                              rec_nb=raw.info['subject_info']['rec_id'], 
+                              transform=scale) for raw in raws]
+# Concatenate into a single dataset
 dataset = ConcatDataset(all_datasets)
 
 print('Windows have been extracted and wrapped up into Pytorch datasets')
 
 # %%
-### 3. Making train, valid and test splits ###
+# 3. Making train, valid and test splits ###
+
 
 def pick_recordings(dataset, test_size):
     """Pick recordings using subject and recording numbers.
@@ -308,6 +317,7 @@ def train_test_split(dataset, n_groups, split_by='subj_nb'):
     test_ds = ConcatDataset([dataset.datasets[i] for i in test_idx])
         
     return train_ds, test_ds
+
 
 # We seed the random number generators to make our splits reproducible
 torch.manual_seed(87)
