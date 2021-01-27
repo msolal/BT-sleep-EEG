@@ -13,7 +13,7 @@ import pandas as pd
 from torch.optim import Adam
 import matplotlib.pyplot as plt
 from torch.nn import CrossEntropyLoss
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import DataLoader
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import cohen_kappa_score, confusion_matrix, \
                             balanced_accuracy_score
@@ -30,38 +30,17 @@ else:
 # mne log
 mne.set_log_level('ERROR')
 
-exp_nb = 0
-plots_path = f'plots/exp{exp_nb}/'
+exp_nb = 'all-10'
+plots_path = f'plots/{exp_nb}/'
 
 # %%
-# 1. Loading the data
+# 1&2. Loading & preprocessing the data
 
-# Get paths to .edf files
-filepaths, annotpaths = datasets.get_paths_mass(10)
-
-# Load recordings
-raws = [datasets.load_raw(f, a) for (f, a) in zip(filepaths, annotpaths)]
-
-# Plot a recording as a sanity check
-raws[0].plot().savefig(plots_path + '1-rawplot')
-
-# %%
-# 2. Preprocessing raw data
-
-# Filtering
-datasets.filtering(raws)
-# Plot the power spectrum of a recording as sanity check
-raws[0].plot_psd().savefig(plots_path + '2-psd')
-
-# Apply windowing and move to pytorch dataset
-all_datasets = [datasets.EpochsDataset(*datasets.extract_epochs(raw),
-                                       subj_nb=raw.info['subject_info']['id'],
-                                       rec_nb=raw.
-                                       info['subject_info']['rec_id'],
-                                       transform=datasets.scale)
-                for raw in raws]
-# Concatenate into a single dataset
-dataset = ConcatDataset(all_datasets)
+# Get dataset, sampling frequency and number of channels
+dataset, sfreq, n_channels = datasets.get_mass_dataset(nb_subjects=30,
+                                                       plot_idx=0)
+dataset, sfreq, n_channels = datasets.get_physionet_dataset(nb_subjects=30,
+                                                            plot_idx=0)
 
 # %%
 # 3. Making train, valid and test splits
@@ -71,7 +50,7 @@ torch.manual_seed(87)
 np.random.seed(87)
 
 # Use recordings of the first 10 subjects as test set
-test_idx = list(range(2))
+test_idx = list(range(10))
 test_ds, train_ds = datasets.pick_recordings(dataset, test_idx)
 
 # Split remaining recordings into training and validation sets
@@ -100,10 +79,6 @@ print(class_weights)
 
 # %%
 # 4. Creating the neural network
-
-# Sampling frequency & number of channels
-sfreq = raws[0].info['sfreq']
-n_channels = raws[0].info['nchan']
 
 # Create model
 model = models.SleepStagerChambon2018(n_channels, sfreq, n_classes=5)

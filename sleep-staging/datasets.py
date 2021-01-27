@@ -1,12 +1,16 @@
+import os
 import mne
 import numpy as np
 import torch
 from torch.utils.data import Dataset, ConcatDataset
 from sklearn.model_selection import LeavePGroupsOut
+from mne.datasets.sleep_physionet.age import fetch_data
+
+import main
 
 
-def get_paths_mass(nb_subjects=None):
-    """ Get paths for the MASS dataset on drago
+def get_mass_paths(nb_subjects=None):
+    """ Get paths for the MASS dataset on drago.
 
     Parameters
     ----------
@@ -15,12 +19,11 @@ def get_paths_mass(nb_subjects=None):
 
     Returns
     -------
-    fpaths : list
+    raw_fnames : list
         list of paths for the .edf files containing the raw data.
-    apaths : list
+    annot_fnames : list
         list of paths for the .edf files containing the annotations.
     """
-
     if nb_subjects is None:
         subjects = [x for x in list(range(1, 47)) if x not in {36, 40, 43, 45}]
     else:
@@ -32,21 +35,22 @@ def get_paths_mass(nb_subjects=None):
             rec_nb.append('01-03-000{}'.format(i))
         else:
             rec_nb.append('01-03-00{}'.format(i))
-    fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i)
-              for i in rec_nb]
-    apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".
-              format(i) for i in rec_nb]
-    return fpaths, apaths
+    raw_fnames = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i)
+                  for i in rec_nb]
+    annot_fnames = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".
+                    format(i) for i in rec_nb]
+    return raw_fnames, annot_fnames
 
 
-def load_raw(fpath, apath, load_eeg_only=True, crop_wake_mins=0):
+def load_mass_raw(raw_fname, annot_fname, load_eeg_only=True,
+                  crop_wake_mins=0):
     """Load a recording into mne raw given file paths.
 
     Parameters
     ----------
-    fpath : str
+    raw_fname : str
         path to the .edf file containing the raw data.
-    apath : str
+    annot_fname : str
         path to the .edf file containing the annotations.
     load_eeg_only : bool
         If True, only keep EEG channels and discard other modalities
@@ -67,13 +71,12 @@ def load_raw(fpath, apath, load_eeg_only=True, crop_wake_mins=0):
                'EMG Chin3': 'emg'}
     exclude = mapping.keys() if load_eeg_only else ()
 
-    # works well with MASS, might require adaptation
-    record_nb = fpath[29:39]
-    assert(record_nb == apath[41:51])
+    record_nb = raw_fname[29:39]
+    assert(record_nb == annot_fname[41:51])
     # print('record_nb = annot_nb = ', record_nb)
 
-    raw = mne.io.read_raw_edf(fpath, exclude=exclude)
-    annots = mne.read_annotations(apath)
+    raw = mne.io.read_raw_edf(raw_fname, exclude=exclude)
+    annots = mne.read_annotations(annot_fname)
     raw.set_annotations(annots, emit_warning=False)
     if not load_eeg_only:
         raw.set_channel_types(mapping)
@@ -101,6 +104,168 @@ def load_raw(fpath, apath, load_eeg_only=True, crop_wake_mins=0):
     raw.info['subject_info'] = {'id': record_nb, 'rec_id': record_nb}
 
     return raw
+
+
+def get_mass_dataset(nb_subjects=None, plot_idx=None):
+    """Get MASS dataset.
+
+    Parameters
+    ----------
+    nb_subjects : int or None
+        number of subjects wanted.
+    plot_idx : int or None
+        record to plot.
+
+    Returns
+    -------
+    Dataset :
+        torch dataset.
+    """
+    # Get paths to .edf files
+    raw_fnames, annot_fnames = get_mass_paths(nb_subjects)
+    # Load recordings
+    raws = [load_mass_raw(raw_fname, annot_fname) for (raw_fname, annot_fname)
+            in zip(raw_fnames, annot_fnames)]
+    sfreq = raws[0].info['sfreq']
+    n_channels = raws[0].info['nchan']
+    # Plot a recording as a sanity check
+    if plot_idx is not None:
+        raws[plot_idx].plot().savefig(main.plots_path + '1-rawplot')
+    # Filtering
+    filtering(raws)
+    # Plot the power spectrum of a recording as sanity check
+    if plot_idx is not None:
+        raws[plot_idx].plot_psd().savefig(main.plots_path + '2-psd')
+    # Apply windowing and move to pytorch dataset
+    all_datasets = [EpochsDataset(*extract_epochs(raw),
+                                  subj_nb=raw.info['subject_info']['id'],
+                                  rec_nb=raw.info['subject_info']['rec_id'],
+                                  transform=scale)
+                    for raw in raws]
+    # Concatenate into a single dataset
+    dataset = ConcatDataset(all_datasets)
+    return dataset, sfreq, n_channels
+
+
+def get_physionet_paths(nb_subjects, recordings=[1]):
+    """ Get paths for the sleep physionet dataset.
+
+    Parameters
+    ----------
+    nb_subjects : int
+        number of subjects wanted.
+    recording : list
+        list of recordings wanted.
+
+    Returns
+    -------
+    paths : tuple
+        tuple of paths for raw filenames and annotations filenames.
+    """
+    subjects = range(nb_subjects)
+    return fetch_data(subjects=subjects,
+                      recording=recordings,
+                      on_missing='warning')
+
+
+def load_physionet_raw(raw_fname, annot_fname, load_eeg_only=True,
+                       crop_wake_mins=0):
+    """Load a recording into mne raw given file paths.
+
+    Parameters
+    ----------
+    raw_fname : str
+        path to the .edf file containing the raw data.
+    annot_fname : str
+        path to the .edf file containing the annotations.
+    load_eeg_only : bool
+        If True, only keep EEG channels and discard other modalities
+        (speeds up loading).
+    crop_wake_mins : float
+        Number of minutes of wake events before and after sleep events.
+
+    Returns
+    -------
+    mne.io.Raw :
+        Raw object containing the EEG and annotations.
+    """
+    mapping = {'EOG horizontal': 'eog',
+               'Resp oro-nasal': 'misc',
+               'EMG submental': 'misc',
+               'Temp rectal': 'misc',
+               'Event marker': 'misc'}
+    exclude = mapping.keys() if load_eeg_only else ()
+
+    raw = mne.io.read_raw_edf(raw_fname, exclude=exclude)
+    annots = mne.read_annotations(annot_fname)
+    raw.set_annotations(annots, emit_warning=False)
+    if not load_eeg_only:
+        raw.set_channel_types(mapping)
+
+    if crop_wake_mins > 0:  # Cut start and end Wake periods
+        # Find first and last sleep stages
+        mask = [x[-1] in ['1', '2', '3', '4', 'R']
+                for x in annots.description]
+        sleep_event_inds = np.where(mask)[0]
+
+        # Crop raw
+        tmin = annots[int(sleep_event_inds[0])]['onset'] - \
+            crop_wake_mins * 60
+        tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
+            crop_wake_mins * 60
+        raw.crop(tmin=tmin, tmax=tmax)
+
+    # Rename EEG channels
+    ch_names = {i: i.replace('EEG ', '')
+                for i in raw.ch_names if 'EEG' in i}
+    mne.rename_channels(raw.info, ch_names)
+
+    basename = os.path.basename(raw_fname)
+    subj_nb, rec_nb = int(basename[3:5]), int(basename[5])
+    raw.info['subject_info'] = {'id': subj_nb, 'rec_id': rec_nb}
+
+    return raw
+
+
+def get_physionet_dataset(nb_subjects=None, plot_idx=None):
+    """Get Sleep Physionet dataset.
+
+    Parameters
+    ----------
+    nb_subjects : int or None
+        number of subjects wanted.
+    plot_idx : int or None
+        record to plot.
+
+    Returns
+    -------
+    Dataset :
+        torch dataset.
+    """
+    # Get paths to .edf files
+    raw_fnames, annot_fnames = get_physionet_paths(nb_subjects)
+    # Load recordings
+    raws = [load_physionet_raw(raw_fname, annot_fname)
+            for (raw_fname, annot_fname) in zip(raw_fnames, annot_fnames)]
+    sfreq = raws[0].info['sfreq']
+    n_channels = raws[0].info['nchan']
+    # Plot a recording as a sanity check
+    if plot_idx is not None:
+        raws[plot_idx].plot().savefig(main.plots_path + '1-rawplot')
+    # Filtering
+    filtering(raws)
+    # Plot the power spectrum of a recording as sanity check
+    if plot_idx is not None:
+        raws[plot_idx].plot_psd().savefig(main.plots_path + '2-psd')
+    # Apply windowing and move to pytorch dataset
+    all_datasets = [EpochsDataset(*extract_epochs(raw),
+                                  subj_nb=raw.info['subject_info']['id'],
+                                  rec_nb=raw.info['subject_info']['rec_id'],
+                                  transform=scale)
+                    for raw in raws]
+    # Concatenate into a single dataset
+    dataset = ConcatDataset(all_datasets)
+    return dataset, sfreq, n_channels
 
 
 def filtering(raws, l_freq=None, h_freq=30):
