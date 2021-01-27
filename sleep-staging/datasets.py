@@ -6,8 +6,6 @@ from torch.utils.data import Dataset, ConcatDataset
 from sklearn.model_selection import LeavePGroupsOut
 from mne.datasets.sleep_physionet.age import fetch_data
 
-import main
-
 
 def get_mass_paths(nb_subjects=None):
     """ Get paths for the MASS dataset on drago.
