@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 import mne
 mne.set_log_level('ERROR')
 
-subjects = [x for x in list(range(1, 47)) if x not in {36, 40, 43}]
+subjects = [x for x in list(range(1, 47)) if x not in {36, 40, 43, 45}]
 rec_nb = []
 for i in subjects:
     assert i not in {0, 36, 43, 49}
@@ -42,8 +42,8 @@ for i in subjects:
     else:
         rec_nb.append('01-03-00{}'.format(i))
 fpaths = ['/storage/store/data/mass/SS3/{} PSG.edf'.format(i) for i in rec_nb]
-apaths = ["/storage/store/data/mass/SS3/annotations/ \
-          {} Annotations.edf".format(i) for i in rec_nb]
+apaths = ["/storage/store/data/mass/SS3/annotations/{} Annotations.edf".
+          format(i) for i in rec_nb]
 
 # nb_subjects = 30
 # fpaths = [sorted(glob.glob("/storage/store/data/mass/SS3/ \
@@ -53,7 +53,7 @@ apaths = ["/storage/store/data/mass/SS3/annotations/ \
 # print(apaths, fpaths)
 
 
-def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
+def load_raw(fpath, apath, load_eeg_only=True,
                              crop_wake_mins=0):
     """Load a recording from the Sleep Physionet dataset.
 
@@ -117,7 +117,7 @@ def load_sleep_physionet_raw(fpath, apath, load_eeg_only=True,
 
 
 # Load recordings
-raws = [load_sleep_physionet_raw(f, a) for (f, a) in zip(fpaths, apaths)]
+raws = [load_raw(f, a) for (f, a) in zip(fpaths, apaths)]
 print('All recordings have been loaded in raws')
 
 # Plot a recording as a sanity check
@@ -339,11 +339,11 @@ print(f'Validation: {len(valid_ds)}')
 print(f'Test: {len(test_ds)}')
 
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
-# y_train = pd.Series([y for _, y in train_ds]).map(classes_mapping)
-# ax = y_train.value_counts().plot(kind='barh')
-# ax.set_xlabel('Number of training examples')
-# ax.set_ylabel('Sleep stage')
-# ax.figure.savefig('plots/3-mass-class-imbalance')
+y_train = pd.Series([y for _, y in train_ds]).map(classes_mapping)
+ax = y_train.value_counts().plot(kind='barh')
+ax.set_xlabel('Number of training examples')
+ax.set_ylabel('Sleep stage')
+ax.figure.savefig('plots/3-mass-class-imbalance')
 
 train_y = np.concatenate([ds.epochs_labels for ds in train_ds.datasets])
 class_weights = compute_class_weight('balanced', classes=np.unique(train_y),
