@@ -7,6 +7,7 @@
 
 from collections.abc import Iterable
 from functools import partial
+import numpy as np
 
 
 class MNEPreproc(object):
@@ -107,3 +108,25 @@ def _preprocess(raw_or_epochs, preprocessors):
     """
     for preproc in preprocessors:
         preproc.apply(raw_or_epochs)
+
+
+def zscore(data):
+    """Zscore normalize continuous or windowed data in-place.
+    Parameters
+    ----------
+    data: np.ndarray (n_channels, n_times) or (n_windows, n_channels, n_times)
+        continuous or windowed signal
+    Returns
+    -------
+    zscored: np.ndarray (n_channels x n_times) or (n_windows x n_channels x
+    n_times)
+        normalized continuous or windowed data
+    ..note:
+        If this function is supposed to preprocess continuous data, it should be
+        given to raw.apply_function().
+    """
+    zscored = data - np.mean(data, keepdims=True, axis=-1)
+    zscored = zscored / np.std(zscored, keepdims=True, axis=-1)
+    if hasattr(data, '_data'):
+        data._data = zscored
+    return zscored

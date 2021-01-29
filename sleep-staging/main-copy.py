@@ -2,9 +2,13 @@
 # 0. Setting up the environment
 
 import torch
+import numpy as np
 
 from datasets.mass import MASS_SS3
+from datautil.preprocess import zscore
 from datasets.sleep_physionet import SleepPhysionet
+from datautil.windowers import create_windows_from_events
+from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
 
 # GPU or CPU?
 if torch.cuda.is_available():
@@ -22,7 +26,44 @@ dataset = SleepPhysionet(subject_ids=[0, 1], recording_ids=[1], crop_wake_mins=3
 
 
 # %%
-# 2. Preprocessing raw data
+# 2. Preprocessing
+
+high_cut_hz = 30
+
+preprocessors = [
+    # bandpass filter
+    MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
+]
+
+# Transform the data
+preprocess(dataset, preprocessors)
+
+# %%
+# Extracting windows
+
+mapping = {  # We merge stages 3 and 4 following AASM standards.
+    'Sleep stage W': 0,
+    'Sleep stage 1': 1,
+    'Sleep stage 2': 2,
+    'Sleep stage 3': 3,
+    'Sleep stage 4': 3,
+    'Sleep stage R': 4
+}
+
+window_size_s = 30
+# sfreq = 100
+sfreq = int(dataset.datasets[0].raw.info['sfreq'])
+window_size_samples = window_size_s * sfreq
+
+windows_dataset = create_windows_from_events(
+    dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
+    window_size_samples=window_size_samples,
+    window_stride_samples=window_size_samples, preload=True, mapping=mapping)
+
+# %%
+# Window preprocessing
+
+preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 
 # %%
 # 3. Making train, valid and test splits

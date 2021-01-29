@@ -14,7 +14,7 @@ import numpy as np
 import mne
 import pandas as pd
 
-from ..datasets.base import WindowsDataset, BaseConcatDataset
+from braindecode.datasets.base import WindowsDataset, BaseConcatDataset
 
 
 def create_windows_from_events(
@@ -362,18 +362,3 @@ def _check_windowing_arguments(
             "window size has to be larger than 0")
         assert window_stride_samples > 0, (
             "window stride has to be larger than 0")
-
-    © 2021 GitHub, Inc.
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
-
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
