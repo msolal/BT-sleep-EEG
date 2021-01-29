@@ -6,7 +6,8 @@ from torch.utils.data import Dataset, ConcatDataset
 from sklearn.model_selection import LeavePGroupsOut
 from mne.datasets.sleep_physionet.age import fetch_data
 
-import main
+exp_nb = 'mass-10-2-bis'
+plots_path = f'plots/{exp_nb}/'
 
 
 def get_mass_paths(nb_subjects=None):
@@ -130,12 +131,12 @@ def get_mass_dataset(nb_subjects=None, plot_idx=None):
     n_channels = raws[0].info['nchan']
     # Plot a recording as a sanity check
     if plot_idx is not None:
-        raws[plot_idx].plot().savefig(main.plots_path + '1-rawplot')
+        raws[plot_idx].plot().savefig(plots_path + '1-rawplot')
     # Filtering
     filtering(raws)
     # Plot the power spectrum of a recording as sanity check
     if plot_idx is not None:
-        raws[plot_idx].plot_psd().savefig(main.plots_path + '2-psd')
+        raws[plot_idx].plot_psd().savefig(plots_path + '2-psd')
     # Apply windowing and move to pytorch dataset
     all_datasets = [EpochsDataset(*extract_epochs(raw),
                                   subj_nb=raw.info['subject_info']['id'],
@@ -251,12 +252,12 @@ def get_physionet_dataset(nb_subjects=None, plot_idx=None):
     n_channels = raws[0].info['nchan']
     # Plot a recording as a sanity check
     if plot_idx is not None:
-        raws[plot_idx].plot().savefig(main.plots_path + '1-rawplot')
+        raws[plot_idx].plot().savefig(plots_path + '1-rawplot')
     # Filtering
     filtering(raws)
     # Plot the power spectrum of a recording as sanity check
     if plot_idx is not None:
-        raws[plot_idx].plot_psd().savefig(main.plots_path + '2-psd')
+        raws[plot_idx].plot_psd().savefig(plots_path + '2-psd')
     # Apply windowing and move to pytorch dataset
     all_datasets = [EpochsDataset(*extract_epochs(raw),
                                   subj_nb=raw.info['subject_info']['id'],

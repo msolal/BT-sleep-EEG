@@ -30,17 +30,17 @@ else:
 # mne log
 mne.set_log_level('ERROR')
 
-exp_nb = 'all-10'
+exp_nb = 'mass-10-2-bis'
 plots_path = f'plots/{exp_nb}/'
 
 # %%
 # 1&2. Loading & preprocessing the data
 
 # Get dataset, sampling frequency and number of channels
-dataset, sfreq, n_channels = datasets.get_mass_dataset(nb_subjects=30,
-                                                       plot_idx=0)
-dataset, sfreq, n_channels = datasets.get_physionet_dataset(nb_subjects=30,
-                                                            plot_idx=0)
+dataset, sfreq, n_channels = datasets.get_mass_dataset(nb_subjects=10,
+                                                       plot_idx=1)
+# dataset, sfreq, n_channels = datasets.get_physionet_dataset(nb_subjects=10,
+#                                                             plot_idx=1)
 
 # %%
 # 3. Making train, valid and test splits
@@ -50,7 +50,7 @@ torch.manual_seed(87)
 np.random.seed(87)
 
 # Use recordings of the first 10 subjects as test set
-test_idx = list(range(10))
+test_idx = list(range(2))
 test_ds, train_ds = datasets.pick_recordings(dataset, test_idx)
 
 # Split remaining recordings into training and validation sets
