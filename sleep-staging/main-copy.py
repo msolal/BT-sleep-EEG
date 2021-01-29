@@ -21,7 +21,7 @@ else:
 # %%
 # 1. Loading the data
 
-dataset = SleepPhysionet(subject_ids=[0, 1], recording_ids=[1], crop_wake_mins=30)
+dataset = SleepPhysionet(subject_ids=[0, 1, 2, 3, 4], recording_ids=[1], crop_wake_mins=30)
 # dataset = MASS_SS3(subject_ids=[1, 2], crop_wake_mins=30)
 
 
