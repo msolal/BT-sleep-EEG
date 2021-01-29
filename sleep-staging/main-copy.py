@@ -8,7 +8,7 @@ from datasets.mass import MASS_SS3
 from datautil.preprocess import zscore
 from datasets.sleep_physionet import SleepPhysionet
 from datautil.windowers import create_windows_from_events
-from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
+from datautil.preprocess import MNEPreproc, preprocess
 
 # GPU or CPU?
 if torch.cuda.is_available():
@@ -21,7 +21,9 @@ else:
 # %%
 # 1. Loading the data
 
-dataset = SleepPhysionet(subject_ids=[0, 1, 2, 3, 4], recording_ids=[1], crop_wake_mins=30)
+dataset = SleepPhysionet(subject_ids=[0, 1, 2, 3, 4],
+                         recording_ids=[1],
+                         crop_wake_mins=30)
 # dataset = MASS_SS3(subject_ids=[1, 2], crop_wake_mins=30)
 
 
