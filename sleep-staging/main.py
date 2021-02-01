@@ -19,7 +19,7 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from results.visualisation import plot_confusion_matrix, plot_history
+from visualisation import plot_confusion_matrix, plot_history
 
 
 # %%
@@ -74,13 +74,13 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 # %%
 # 3. Making train, valid and test splits
 cuda = torch.cuda.is_available()
-random_seed = set_random_seeds(seed=87, cuda=cuda)
+random_state = 42
 
 subjects = np.unique(windows_dataset.description['subject'])
 train_set, test_set = train_test_split(
-    subjects, test_size=0.4, random_state=random_seed)
+    subjects, test_size=0.4, random_state=random_state)
 valid_set, test_set = train_test_split(
-    test_set, test_size=0.5, random_state=random_seed)
+    test_set, test_size=0.5, random_state=random_state)
 
 # splitted = windows_dataset.split(by=[[0, 1, 2], [3, 4, 5], [6, 7]])
 # # splitted = windows_dataset.split(by='subject')
@@ -97,6 +97,7 @@ print(f'Test: {test_set.datasets[0].windows}')
 # %%
 # 4. Creating the model
 
+set_random_seeds(seed=87, cuda=cuda)
 device = 'cuda' if cuda else 'cpu'
 if cuda:
     torch.backends.cudnn.benchmark = True
