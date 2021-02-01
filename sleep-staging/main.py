@@ -25,10 +25,10 @@ from visualisation import plot_confusion_matrix, plot_history
 # %%
 # 1. Loading the data
 
-dataset = SleepPhysionet(subject_ids=list(range(30)),
-                         recording_ids=[1],
-                         crop_wake_mins=30)
-# dataset = MASS_SS3(subject_ids=[1, 2], crop_wake_mins=30)
+# dataset = SleepPhysionet(subject_ids=list(range(30)),
+#                          recording_ids=[1],
+#                          crop_wake_mins=30)
+dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=30)
 
 # %%
 # 2. Preprocessing
@@ -73,21 +73,7 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 
 # %%
 # 3. Making train, valid and test splits
-cuda = torch.cuda.is_available()
-random_state = 42
-
-subjects = np.unique(windows_dataset.description['subject'])
-train_set, test_set = train_test_split(
-    subjects, test_size=0.4, random_state=random_state)
-valid_set, test_set = train_test_split(
-    test_set, test_size=0.5, random_state=random_state)
-
-# splitted = windows_dataset.split(by=[[0, 1, 2], [3, 4, 5], [6, 7]])
-# # splitted = windows_dataset.split(by='subject')
-# train_set = splitted['0']
-# valid_set = splitted['1']
-# test_set = splitted['2']
-
+train_set, valid_set, test_set = train_test_split(windows_dataset, 0.6, 0.2, 0.2)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')
