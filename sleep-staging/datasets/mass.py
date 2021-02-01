@@ -3,9 +3,8 @@ import mne
 import numpy as np
 import pandas as pd
 
-from mne.datasets.sleep_physionet.age import fetch_data
-
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
+
 
 class MASS_SS3(BaseConcatDataset):
     """MASS SS3 dataset.
@@ -28,7 +27,7 @@ class MASS_SS3(BaseConcatDataset):
     """
     def __init__(self, subject_ids=None, preload=False,
                  load_eeg_only=True, crop_wake_mins=30):
-    
+
         not_available = {36, 40, 43, 45}
         if subject_ids is None:
             subject_ids = [x for x in range(1, 47) if x not in not_available]
@@ -36,9 +35,12 @@ class MASS_SS3(BaseConcatDataset):
             subject_ids = subject_ids - not_available
             print('Warning: subjects 36, 40, 43 and 45 are not available.')
 
-        rec_nb = ['01-03-000{}'.format(i) if i < 10 else '01-03-00{}'.format(i) for i in subject_ids]
+        rec_nb = ['01-03-000{}'.format(i) if i < 10 else '01-03-00{}'.format(i)
+                  for i in subject_ids]
 
-        paths = [(f'/storage/store/data/mass/SS3/{i} PSG.edf', f'/storage/store/data/mass/SS3/annotations/{i} Annotations.edf') for i in rec_nb]
+        paths = [(f'/storage/store/data/mass/SS3/{i} PSG.edf',
+                  f'/storage/store/data/mass/SS3/annotations/{i} Annotations.edf')
+                 for i in rec_nb]
 
         all_base_ds = list()
         for p in paths:
@@ -74,9 +76,9 @@ class MASS_SS3(BaseConcatDataset):
 
             # Crop raw
             tmin = annots[int(sleep_event_inds[0])]['onset'] - \
-                   crop_wake_mins * 60
+                crop_wake_mins * 60
             tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
-                   crop_wake_mins * 60
+                crop_wake_mins * 60
             raw.crop(tmin=tmin, tmax=tmax)
 
         # Rename EEG channels

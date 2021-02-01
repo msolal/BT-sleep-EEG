@@ -12,6 +12,7 @@ from mne.datasets.sleep_physionet.age import fetch_data
 
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
+
 class SleepPhysionet(BaseConcatDataset):
     """Sleep Physionet dataset.
     Contains overnight recordings from 78 healthy subjects.
@@ -77,9 +78,9 @@ class SleepPhysionet(BaseConcatDataset):
 
             # Crop raw
             tmin = annots[int(sleep_event_inds[0])]['onset'] - \
-                   crop_wake_mins * 60
+                crop_wake_mins * 60
             tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
-                   crop_wake_mins * 60
+                crop_wake_mins * 60
             raw.crop(tmin=tmin, tmax=tmax)
 
         # Rename EEG channels
