@@ -25,10 +25,10 @@ from visualisation import plot_confusion_matrix, plot_history
 # %%
 # 1. Loading the data
 
-dataset = SleepPhysionet(subject_ids=list(range(20)),
-                         recording_ids=[1],
-                         crop_wake_mins=30)
-# dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=30)
+# dataset = SleepPhysionet(subject_ids=list(range(30)),
+#                          recording_ids=[1],
+#                          crop_wake_mins=30)
+dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=0)
 
 # %%
 # 2. Preprocessing
@@ -58,7 +58,6 @@ mapping = {  # We merge stages 3 and 4 following AASM standards.
 }
 
 window_size_s = 30
-# sfreq = 100
 sfreq = int(dataset.datasets[0].raw.info['sfreq'])
 window_size_samples = window_size_s * sfreq
 
@@ -73,8 +72,7 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 
 # %%
 # 3. Making train, valid and test splits
-train_set, valid_set, test_set = train_valid_test_split(windows_dataset,
-                                                        0.6, 0.2, 0.2)
+train_set, valid_set, test_set = train_valid_test_split(windows_dataset, 0.6, 0.2, 0.2)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')
@@ -111,7 +109,6 @@ model = model.to(device)
 lr = 5e-4
 n_epochs = 5
 batch_size = 16
-num_workers = 0         # nb processes for the data loading process
 
 train_bal_acc = EpochScoring(
     scoring='balanced_accuracy', on_train=True, name='train_bal_acc',
