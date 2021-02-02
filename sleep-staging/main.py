@@ -10,8 +10,8 @@ from datasets.sleep_physionet import SleepPhysionet
 from datautil.preprocess import zscore
 from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
 from datautil.windowers import create_windows_from_events
+from datautil.split import train_valid_test_split
 from util import set_random_seeds
-from sklearn.model_selection import train_test_split
 from models.sleep_stager_chambon import SleepStagerChambon2018
 from skorch.helper import predefined_split
 from skorch.callbacks import EpochScoring
@@ -25,10 +25,10 @@ from visualisation import plot_confusion_matrix, plot_history
 # %%
 # 1. Loading the data
 
-# dataset = SleepPhysionet(subject_ids=list(range(30)),
-#                          recording_ids=[1],
-#                          crop_wake_mins=30)
-dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=30)
+dataset = SleepPhysionet(subject_ids=list(range(20)),
+                         recording_ids=[1],
+                         crop_wake_mins=30)
+# dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=30)
 
 # %%
 # 2. Preprocessing
@@ -58,8 +58,8 @@ mapping = {  # We merge stages 3 and 4 following AASM standards.
 }
 
 window_size_s = 30
-sfreq = 100
-# sfreq = int(dataset.datasets[0].raw.info['sfreq'])
+# sfreq = 100
+sfreq = int(dataset.datasets[0].raw.info['sfreq'])
 window_size_samples = window_size_s * sfreq
 
 windows_dataset = create_windows_from_events(
@@ -73,7 +73,8 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 
 # %%
 # 3. Making train, valid and test splits
-train_set, valid_set, test_set = train_test_split(windows_dataset, 0.6, 0.2, 0.2)
+train_set, valid_set, test_set = train_valid_test_split(windows_dataset,
+                                                        0.6, 0.2, 0.2)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')
@@ -82,7 +83,7 @@ print(f'Test: {test_set.datasets[0].windows}')
 
 # %%
 # 4. Creating the model
-
+cuda = torch.cuda.is_available()
 set_random_seeds(seed=87, cuda=cuda)
 device = 'cuda' if cuda else 'cpu'
 if cuda:
