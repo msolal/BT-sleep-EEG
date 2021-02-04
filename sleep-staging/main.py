@@ -19,7 +19,7 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from visualisation import plot_confusion_matrix, plot_history
+from visualisation.visualisation import plot_confusion_matrix, plot_history
 
 
 # %%
