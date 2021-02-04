@@ -9,10 +9,6 @@ Created on Tue Feb  2 13:44:34 2021
 # %%
 import pandas as pd
 import mne
-from mne_bids import write_raw_bids
-
-# filepath = 'AFan740527annot.csv'
-# rawfile = 'AFan740527.edf'
 
 
 def csv_to_df(filepath):
