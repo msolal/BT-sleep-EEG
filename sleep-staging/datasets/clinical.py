@@ -30,7 +30,7 @@ class ClinicalDataset(BaseConcatDataset):
     def __init__(self, subject_ids=None, preload=False,
                  load_eeg_only=True, crop_wake_mins=30):
 
-        all_sub = pd.read_csv('BIDS/participants.tsv', delimiter='\t',
+        all_sub = pd.read_csv('/media/pallanca/datapartition/maelys/data/BIDS/participants.tsv', delimiter='\t',
                               skiprows=1,
                               names=['participant_id', 'age', 'sex', 'hand'],
                               engine='python')['participant_id'].transform(
@@ -62,15 +62,7 @@ class ClinicalDataset(BaseConcatDataset):
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
                   crop_wake_mins=False):
-        ch_mapping = {
-            'ECG I': 'ecg',
-            'EOG Right Horiz': 'eog',
-            'EOG Left Horiz': 'eog',
-            'EMG Chin1': 'emg',
-            'EMG Chin2': 'emg',
-            'EMG Chin3': 'emg'
-        }
-        exclude = ch_mapping.keys() if load_eeg_only else ()
+        exclude = [] if load_eeg_only else ()
 
         raw = read_raw_bids(bids_path=bids_path,
                             extra_params=dict(exclude=exclude),
@@ -91,17 +83,8 @@ class ClinicalDataset(BaseConcatDataset):
                 crop_wake_mins * 60
             raw.crop(tmin=tmin, tmax=tmax)
 
-        # Rename EEG channels
-        ch_names = {
-            i: i.replace('EEG ', '') for i in raw.ch_names if 'EEG' in i}
-        mne.rename_channels(raw.info, ch_names)
-
-        if not load_eeg_only:
-            raw.set_channel_types(ch_mapping)
-
         basename = bids_path.basename
-        sub_nb = basename[4:8]
-        ses_nb = basename[13:19]
-        desc = pd.Series({'subject': sub_nb, 'recording': ses_nb}, name='')
+        sub_nb = basename[4:]
+        desc = pd.Series({'subject': sub_nb}, name='')
 
         return raw, desc

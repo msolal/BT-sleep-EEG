@@ -7,6 +7,7 @@ import numpy as np
 
 from datasets.mass import MASS_SS3
 from datasets.sleep_physionet import SleepPhysionet
+from datasets.clinical import ClinicalDataset
 from datautil.preprocess import zscore
 from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
 from datautil.windowers import create_windows_from_events
@@ -28,7 +29,8 @@ from visualisation.visualisation import plot_confusion_matrix, plot_history
 # dataset = SleepPhysionet(subject_ids=list(range(30)),
 #                          recording_ids=[1],
 #                          crop_wake_mins=30)
-dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=0)
+# dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=0)
+dataset = ClinicalDataset(subject_ids=1, crop_wake_mins=0)
 
 # %%
 # 2. Preprocessing
