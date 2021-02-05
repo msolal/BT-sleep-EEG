@@ -18,18 +18,14 @@ common.sort()
 
 # %%
 
-subject = ''
-session = ''
-bids_path = BIDSPath(subject=subject, session=session, root='BIDS')
-
-for fileref in common[342:]:
+for fileref in common:
     raw_filepath = raw_path + fileref + '.edf'
     annot_filepath = annot_path + fileref + 'annot.csv'
-    subject, session = fileref[:4], fileref[4:10]
+    subject = fileref[:10]
     annot_df = csv_to_df(annot_filepath)
     annot = df_to_annotation(annot_df)
     raw = mne.io.read_raw_edf(raw_filepath)
     raw.set_annotations(annot)
     raw.info['line_freq'] = 50
-    bids_path.update(subject=subject, session=session)
-    write_raw_bids(raw, bids_path, overwrite=True)
+    bids_path = BIDSPath(subject=subject, root='BIDS2')
+    write_raw_bids(raw, bids_path)

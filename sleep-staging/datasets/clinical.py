@@ -44,7 +44,7 @@ class ClinicalDataset(BaseConcatDataset):
             subject_ids = [x for x in subject_ids if x in all_sub]
             print('Warning: selected subject which doesn\'t exist')
 
-        bids_root = '/media/pallanca/datapartition/maelys/BIDS'
+        bids_root = '/media/pallanca/datapartition/maelys/data/BIDS'
         if load_eeg_only:
             datatype = 'eeg'
         bids_paths = [BIDSPath(subject=subject, datatype=datatype,
