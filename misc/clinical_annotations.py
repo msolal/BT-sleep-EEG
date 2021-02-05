@@ -1,5 +1,6 @@
 import pandas as pd
 import mne
+import os
 
 
 final_column_labels = ['Onset (s after orig_time)',
@@ -13,7 +14,7 @@ event_label = {'Éveil': 'Sleep stage W',
                'REM': 'Sleep stage R'}
 
 
-def csv_to_df(filepath):
+def csv_to_df(filepath, fileref):
     """ Get csv file as pandas dataframe
     Select events marked as validated then add those missing
     Put everything together in final_df
@@ -34,6 +35,7 @@ def csv_to_df(filepath):
     final_df[final_column_labels[2]] = annot_df[column_labels[7]].transform(
                                 lambda x: event_label[x] if x in event_label
                                 else 'misc')
+    save_final_df(fileref, final_df)
     return final_df[final_df['Description'] != 'misc']
 
 
@@ -65,3 +67,8 @@ def df_to_annotation(final_df):
     description = list(final_df.iloc[:, 2])
     my_annot = mne.Annotations(onset, duration, description)
     return my_annot
+
+
+def save_final_df(fileref, final_df):
+    csv_filepath = 'data/clean_annotations' + fileref
+    final_df.to_csv(csv_filepath)
