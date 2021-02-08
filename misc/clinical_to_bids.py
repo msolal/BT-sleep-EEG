@@ -104,7 +104,6 @@ for fileref in common[:10]:
     annot = df_to_annotation(annot_df)
     raw = mne.io.read_raw_edf(raw_filepath)
     channels = raw.info['ch_names']
-    print(subject, channels)
     if 'EEG O2*' in channels:
         channel_types = ch_types_1
         naming = naming_1
