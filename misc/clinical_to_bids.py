@@ -117,5 +117,5 @@ for fileref in common[:10]:
     raw.rename_channels(naming)
     raw.set_channel_types(channel_types)
     raw.info['line_freq'] = 50
-    bids_path = BIDSPath(subject=subject, root='BIDS')
+    bids_path = BIDSPath(subject=subject, root='data/BIDS')
     write_raw_bids(raw, bids_path)
