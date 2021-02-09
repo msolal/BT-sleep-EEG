@@ -74,7 +74,8 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 
 # %%
 # 3. Making train, valid and test splits
-train_set, valid_set, test_set = train_valid_test_split(windows_dataset, 0.6, 0.2, 0.2)
+train_set, valid_set, test_set = train_valid_test_split(windows_dataset,
+                                                        0.6, 0.2, 0.2)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')

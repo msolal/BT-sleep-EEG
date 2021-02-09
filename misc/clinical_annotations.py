@@ -1,6 +1,5 @@
 import pandas as pd
 import mne
-import os
 
 
 final_column_labels = ['Onset (s after orig_time)',
@@ -12,6 +11,8 @@ event_label = {'Éveil': 'Sleep stage W',
                'Stade N3': 'Sleep stage 3',
                'Stade N4': 'Sleep stage 4',
                'REM': 'Sleep stage R'}
+clean_annot_path = (
+    '/media/pallanca/datapartition/maelys/data/clean_annotations/annot')
 
 
 def csv_to_df(filepath, fileref):
@@ -70,5 +71,5 @@ def df_to_annotation(final_df):
 
 
 def save_final_df(fileref, final_df):
-    csv_filepath = '/media/pallanca/datapartition/maelys/data/clean_annotations/annot' + fileref
+    csv_filepath = clean_annot_path + fileref
     final_df.to_csv(csv_filepath+'.csv')

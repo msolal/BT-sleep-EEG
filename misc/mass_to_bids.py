@@ -23,9 +23,10 @@ ch_types_1 = {'ECG I': 'ecg',
 
 # ['ECG I', 'EEG C3-LER', 'EEG C4-LER', 'EEG Cz-LER', 'EEG F3-LER',
 #  'EEG F4-LER', 'EEG F7-LER', 'EEG F8-LER', 'EEG Fp1-LER', 'EEG Fp2-LER',
-#  'EEG Fz-LER', 'EEG O1-LER', 'EEG O2-LER', 'EEG Oz-LER', 'EEG P3-LER', 'EEG P4-LER',
-#  'EEG Pz-LER', 'EEG T3-LER', 'EEG T4-LER', 'EEG T5-LER', 'EEG T6-LER', 'EMG Chin1',
-#  'EMG Chin2', 'EMG Chin3', 'EOG Left Horiz','EOG Right Horiz', 'Resp Belt Abdo', 'Resp Belt Thor']
+#  'EEG Fz-LER', 'EEG O1-LER', 'EEG O2-LER', 'EEG Oz-LER', 'EEG P3-LER',
+#  'EEG P4-LER', 'EEG Pz-LER', 'EEG T3-LER', 'EEG T4-LER', 'EEG T5-LER',
+#  'EEG T6-LER', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3', 'EOG Left Horiz',
+#  'EOG Right Horiz', 'Resp Belt Abdo', 'Resp Belt Thor']
 ch_types_2 = {'ECG I': 'ecg',
               'EMG Chin1': 'emg',
               'EMG Chin2': 'emg',
@@ -54,11 +55,15 @@ for fileref in common:
             annots.description[i] = 'Sleep stage W'
         elif 'EMGArtefact' in desc:
             root = ET.fromstring(desc)
-            channel = root.attrib["channel"].replace("-LER", "").replace("-CLE", "").split()[1]
+            channel = (root.attrib["channel"]
+                           .replace("-LER", "")
+                           .replace("-CLE", "").split()[1])
             annots.description[i] = f"BAD_{root.attrib['groupName']}_{channel}"
         elif 'MicroArousal' in desc:
             root = ET.fromstring(desc)
-            channel = root.attrib["channel"].replace("-LER", "").replace("-CLE", "").split()[1]
+            channel = (root.attrib["channel"]
+                           .replace("-LER", "")
+                           .replace("-CLE", "").split()[1])
             annots.description[i] = f"{root.attrib['groupName']}_{channel}"
     raw.set_annotations(annots, emit_warning=False)
     ch_names = raw.info['ch_names']
@@ -71,7 +76,9 @@ for fileref in common:
     new_ch_names = {}
     for old in ch_names:
         if old.startswith('EEG'):
-            new = old.replace('EEG ', '').replace('-LER', '').replace('-CLE', '')
+            new = (old.replace('EEG ', '')
+                   .replace('-LER', '')
+                   .replace('-CLE', ''))
             new_ch_names[old] = new
             raw._orig_units[new] = raw._orig_units[old]
             del raw._orig_units[old]

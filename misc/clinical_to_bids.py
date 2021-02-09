@@ -1,10 +1,12 @@
-# %%
 import os
 from clinical_annotations import csv_to_df, df_to_annotation
 import mne
 from mne_bids import write_raw_bids, BIDSPath
 
-# %%
+
+raw_path = '/media/pallanca/datapartition/maelys/data/edf/'
+annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
+bids_root = '/media/pallanca/datapartition/maelys/data/BIDS'
 
 # EEG O2*
 # ['BodyPos BodyPos', 'BodyPos Pos', 'ECG', 'EEG C3', 'EEG C4', 'EEG F3',
@@ -84,9 +86,6 @@ ch_types_3 = {'BodyPos BodyPos': 'misc',
               'SaO2 SaO2': 'misc',
               'Sound Mic': 'misc'}
 
-# %%
-raw_path = '/media/pallanca/datapartition/maelys/data/edf/'
-annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
 
 raw_files = os.listdir(raw_path)
 annot_files = os.listdir(annot_path)
@@ -115,7 +114,9 @@ for fileref in common:
         new_ch_names = naming_3
     for old in ch_names:
         if old.startswith('EEG') and old not in new_ch_names.keys():
-            new = old.replace('EEG ', '').replace('-LER', '').replace('-CLE', '')
+            new = (old.replace('EEG ', '')
+                      .replace('-LER', '')
+                      .replace('-CLE', ''))
             new_ch_names[old] = new
             raw._orig_units[new] = raw._orig_units[old]
             del raw._orig_units[old]
@@ -123,6 +124,5 @@ for fileref in common:
     raw.rename_channels(new_ch_names)
     raw.set_channel_types(channel_types)
     raw.info['line_freq'] = 50
-    bids_path = BIDSPath(subject=subject, root='/media/pallanca/datapartition/maelys/data/BIDS')
+    bids_path = BIDSPath(subject=subject, root=bids_root)
     write_raw_bids(raw, bids_path, overwrite=True)
-
