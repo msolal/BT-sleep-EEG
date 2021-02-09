@@ -103,7 +103,6 @@ for fileref in common:
     annot_df = csv_to_df(annot_filepath, fileref)
     annot = df_to_annotation(annot_df)
     raw = mne.io.read_raw_edf(raw_filepath)
-    raw.plot().savefig('testplot-'+subject)
     ch_names = raw.info['ch_names']
     if 'EEG O2*' in ch_names:
         channel_types = ch_types_1
@@ -127,5 +126,3 @@ for fileref in common:
     bids_path = BIDSPath(subject=subject, root='/media/pallanca/datapartition/maelys/data/BIDS')
     write_raw_bids(raw, bids_path, overwrite=True)
 
-
-# %%
