@@ -12,7 +12,7 @@ from mne_bids import write_raw_bids, BIDSPath
 #  'EMG Tib-L', 'EMG Tib-R', 'EOG eog-l', 'EOG eog-r', 'Resp Abd',
 #  'Resp Flux', 'Resp Flw2', 'Resp Therm', 'Resp Thor', 'SaO2 HR',
 #  'SaO2 Pulse', 'SaO2 SaO2', 'Sound Ronf']
-naming_1 = {'EEG O2*': 'EEG O2'}
+naming_1 = {'EEG O2*': 'O2'}
 ch_types_1 = {'BodyPos BodyPos': 'misc',
               'BodyPos Pos': 'misc',
               'ECG': 'ecg',
@@ -38,8 +38,8 @@ ch_types_1 = {'BodyPos BodyPos': 'misc',
 #  'Resp Abd', 'Resp Cann Raw', 'Resp Ther', 'Resp Thor',
 #  'SaO2 SaO2', 'Sound Ronf', 'Unspec BEAT', 'Unspec BP LVL',
 #  'Unspec BP RAW', 'Unspec Flux', 'Unspec PULS']
-naming_2 = {'EEG M1#2': 'EEG M1',
-            'EEG M2#2': 'EEG M2'}
+naming_2 = {'EEG M1#2': 'M1',
+            'EEG M2#2': 'M2'}
 ch_types_2 = {'BodyPos Pos': 'misc',
               'ECG': 'ecg',
               'EMG Chin1': 'emg',
@@ -85,8 +85,8 @@ ch_types_3 = {'BodyPos BodyPos': 'misc',
               'Sound Mic': 'misc'}
 
 # %%
-raw_path = 'data/edf/'
-annot_path = 'data/csv_hypno/'
+raw_path = '/media/pallanca/datapartition/maelys/data/edf/'
+annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
 
 raw_files = os.listdir(raw_path)
 annot_files = os.listdir(annot_path)
@@ -96,27 +96,36 @@ annot_names = [filename.strip('annot.csv') for filename in annot_files]
 common = list(set(raw_names) & set(annot_names))
 common.sort()
 
-for fileref in common[:10]:
+for fileref in common[:]:
     raw_filepath = raw_path + fileref + '.edf'
     annot_filepath = annot_path + fileref + 'annot.csv'
     subject = fileref[:10]
     annot_df = csv_to_df(annot_filepath, fileref)
     annot = df_to_annotation(annot_df)
     raw = mne.io.read_raw_edf(raw_filepath)
-    channels = raw.info['ch_names']
-    print(subject, channels)
-    if 'EEG O2*' in channels:
+    raw.plot().savefig('testplot-'+subject)
+    ch_names = raw.info['ch_names']
+    if 'EEG O2*' in ch_names:
         channel_types = ch_types_1
-        naming = naming_1
-    elif 'EEG M1#2' in channels:
+        new_ch_names = naming_1
+    elif 'EEG M1#2' in ch_names:
         channel_types = ch_types_2
-        naming = naming_2
+        new_ch_names = naming_2
     else:
         channel_types = ch_types_3
-        naming = naming_3
+        new_ch_names = naming_3
+    for old in ch_names:
+        if old.startswith('EEG') and old not in new_ch_names.keys():
+            new = old.replace('EEG ', '').replace('-LER', '').replace('-CLE', '')
+            new_ch_names[old] = new
+            raw._orig_units[new] = raw._orig_units[old]
+            del raw._orig_units[old]
     raw.set_annotations(annot)
-    raw.rename_channels(naming)
+    raw.rename_channels(new_ch_names)
     raw.set_channel_types(channel_types)
     raw.info['line_freq'] = 50
-    bids_path = BIDSPath(subject=subject, root='BIDS')
-    write_raw_bids(raw, bids_path)
+    bids_path = BIDSPath(subject=subject, root='/media/pallanca/datapartition/maelys/data/BIDS')
+    write_raw_bids(raw, bids_path, overwrite=True)
+
+
+# %%

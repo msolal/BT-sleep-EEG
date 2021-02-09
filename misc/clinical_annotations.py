@@ -70,5 +70,5 @@ def df_to_annotation(final_df):
 
 
 def save_final_df(fileref, final_df):
-    csv_filepath = 'data/clean_annotations' + fileref
-    final_df.to_csv(csv_filepath)
+    csv_filepath = '/media/pallanca/datapartition/maelys/data/clean_annotations/annot' + fileref
+    final_df.to_csv(csv_filepath+'.csv')
