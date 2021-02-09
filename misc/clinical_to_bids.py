@@ -96,7 +96,7 @@ annot_names = [filename.strip('annot.csv') for filename in annot_files]
 common = list(set(raw_names) & set(annot_names))
 common.sort()
 
-for fileref in common[:]:
+for fileref in common:
     raw_filepath = raw_path + fileref + '.edf'
     annot_filepath = annot_path + fileref + 'annot.csv'
     subject = fileref[:10]
