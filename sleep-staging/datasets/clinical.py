@@ -1,12 +1,11 @@
-import os
-import mne
 import numpy as np
 import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids
-
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
+
 path_to_data = '/media/pallanca/datapartition/maelys/data/BIDS/'
+
 
 class ClinicalDataset(BaseConcatDataset):
     """MASS SS3 dataset.
@@ -15,9 +14,9 @@ class ClinicalDataset(BaseConcatDataset):
     Parameters
     ----------
     subject_ids: list(str) | int | None
-        list of str of subject(s) to be loaded. 
+        list of str of subject(s) to be loaded.
         If None, load all available subjects.
-        If int, load first subject_ids subjects. 
+        If int, load first subject_ids subjects.
     preload: bool
         If True, preload the data of the Raw objects.
     load_eeg_only: bool
@@ -31,8 +30,8 @@ class ClinicalDataset(BaseConcatDataset):
     def __init__(self, subject_ids=None, preload=False,
                  load_eeg_only=True, crop_wake_mins=30):
 
-        all_sub = pd.read_csv(path_to_data + 'participants.tsv', delimiter='\t',
-                              skiprows=1,
+        all_sub = pd.read_csv(path_to_data + 'participants.tsv',
+                              delimiter='\t', skiprows=1,
                               names=['participant_id', 'age', 'sex', 'hand'],
                               engine='python')['participant_id'].transform(
                                   lambda x: x[4:]).tolist()
@@ -62,17 +61,15 @@ class ClinicalDataset(BaseConcatDataset):
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
                   crop_wake_mins=False):
-        exclude = [] if load_eeg_only else ()
-
-        raw = read_raw_bids(bids_path=bids_path,
-                            extra_params=dict(exclude=exclude),
-                            verbose=False)
+        raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
+        if load_eeg_only:
+            raw.pick_types(eeg=True)
 
         if crop_wake_mins > 0:
             # Find first and last sleep stages
             mask = [
-                x[-1] in ['1', '2', '3', '4', 'R'] 
+                x[-1] in ['1', '2', '3', '4', 'R']
                 for x in annots.description]
             sleep_event_inds = np.where(mask)[0]
 

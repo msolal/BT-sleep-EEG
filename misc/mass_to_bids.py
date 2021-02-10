@@ -14,8 +14,8 @@ all_ch_types = {'ECG I': 'ecg',
                 'EMG Chin3': 'emg',
                 'EOG Right Horiz': 'eog',
                 'EOG Left Horiz': 'eog',
-                'Resp Belt Abdo': 'resp',
-                'Resp Belt Thor': 'resp'}
+                'Resp Belt Abdo': 'misc',
+                'Resp Belt Thor': 'misc'}
 
 raw_files = glob.glob(raw_path+'*.edf')
 annot_files = glob.glob(annot_path+'*.edf')
@@ -36,27 +36,27 @@ for fileref in common:
             annots.description[i] = 'Sleep stage W'
         elif 'EMGArtefact' in desc:
             root = ET.fromstring(desc)
-            channel = (root.attrib["channel"]
-                           .replace("-LER", "")
-                           .replace("-CLE", "").split()[1])
+            channel = (root.attrib["channel"].replace("-LER", "")
+                                             .replace("-CLE", "").split()[1])
             annots.description[i] = f"BAD_{root.attrib['groupName']}_{channel}"
         elif 'MicroArousal' in desc:
             root = ET.fromstring(desc)
-            channel = (root.attrib["channel"]
-                           .replace("-LER", "")
-                           .replace("-CLE", "").split()[1])
+            channel = (root.attrib["channel"].replace("-LER", "")
+                                             .replace("-CLE", "").split()[1])
             annots.description[i] = f"{root.attrib['groupName']}_{channel}"
     raw.set_annotations(annots, emit_warning=False)
     ch_names = raw.info['ch_names']
     new_ch_names, new_ch_types = {}, {}
     for ch_name in ch_names:
-        if ch_name.startswith('EEG '): 
-            new_ch_names[ch_name] = ch_name.replace('EEG ', '').replace('-LER', '').replace('-CLE', '')
+        if ch_name.startswith('EEG '):
+            new_ch_names[ch_name] = (ch_name.replace('EEG ', '')
+                                            .replace('-LER', '')
+                                            .replace('-CLE', ''))
         if ch_name in all_ch_types.keys():
             new_ch_types[ch_name] = all_ch_types[ch_name]
     if 'Resp Belt Abdo' in ch_names:
         ref = 'Linked Ear Reference'
-    else: 
+    else:
         ref = 'Computed Linked Ear'
     for old, new in new_ch_names.items():
         raw._orig_units[new] = raw._orig_units[old]
