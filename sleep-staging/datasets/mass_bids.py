@@ -4,11 +4,12 @@ import numpy as np
 import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids
 
+
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
-path_to_data = '/media/pallanca/datapartition/maelys/data/BIDS/'
+path_to_data = '/storage/store2/data/mass-bids/SS3/'
 
-class ClinicalDataset(BaseConcatDataset):
+class MASS_SS3(BaseConcatDataset):
     """MASS SS3 dataset.
     Contains overnight recordings from 62 healthy subjects.
 
