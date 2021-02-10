@@ -36,11 +36,15 @@ for fileref in common:
             annots.description[i] = 'Sleep stage W'
         elif 'EMGArtefact' in desc:
             root = ET.fromstring(desc)
-            channel = root.attrib["channel"].replace("-LER", "").replace("-CLE", "").split()[1]
+            channel = (root.attrib["channel"]
+                           .replace("-LER", "")
+                           .replace("-CLE", "").split()[1])
             annots.description[i] = f"BAD_{root.attrib['groupName']}_{channel}"
         elif 'MicroArousal' in desc:
             root = ET.fromstring(desc)
-            channel = root.attrib["channel"].replace("-LER", "").replace("-CLE", "").split()[1]
+            channel = (root.attrib["channel"]
+                           .replace("-LER", "")
+                           .replace("-CLE", "").split()[1])
             annots.description[i] = f"{root.attrib['groupName']}_{channel}"
     raw.set_annotations(annots, emit_warning=False)
     ch_names = raw.info['ch_names']
