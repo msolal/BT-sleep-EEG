@@ -36,13 +36,13 @@ all_ch_types = {'BodyPos BodyPos': 'misc',
                 'EOG E2': 'eog',
                 'EOG E1#1': 'eog',
                 'EOG E2#1': 'eog',
-                'Resp Abd': 'resp',
-                'Resp Cann Raw': 'resp',
-                'Resp Flux': 'resp',
-                'Resp Flw2': 'resp',
-                'Resp Ther': 'resp',
-                'Resp Therm': 'resp',
-                'Resp Thor': 'resp',
+                'Resp Abd': 'misc',
+                'Resp Cann Raw': 'misc',
+                'Resp Flux': 'misc',
+                'Resp Flw2': 'misc',
+                'Resp Ther': 'misc',
+                'Resp Therm': 'misc',
+                'Resp Thor': 'misc',
                 'SaO2 HR': 'misc',
                 'SaO2 Pulse': 'misc',
                 'SaO2 SaO2': 'misc',
@@ -64,7 +64,7 @@ common = list(set(raw_names) & set(annot_names))
 common.sort()
 
 # %%
-for fileref in common[:1]:
+for fileref in common:
     raw_filepath = raw_path + fileref + '.edf'
     annot_filepath = annot_path + fileref + 'annot.csv'
     subject = fileref[:10]
@@ -74,6 +74,7 @@ for fileref in common[:1]:
     ch_names = raw.info['ch_names']
     new_ch_names = {ch_name : all_ch_names[ch_name] for ch_name in ch_names if ch_name in all_ch_names.keys()}
     new_ch_types = {ch_name : all_ch_types[ch_name] for ch_name in ch_names if ch_name in all_ch_types.keys()}
+    print(new_ch_types)
     for old, new in new_ch_names.items():
         raw._orig_units[new] = raw._orig_units[old]
         del raw._orig_units[old]
