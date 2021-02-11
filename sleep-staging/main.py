@@ -29,7 +29,7 @@ from visualisation.visualisation import plot_confusion_matrix, plot_history
 # dataset = SleepPhysionet(subject_ids=list(range(30)),
 #                          recording_ids=[1],
 #                          crop_wake_mins=30)
-dataset = MASS_SS3(subject_ids=None, crop_wake_mins=0, load_eeg_only=True)
+dataset = MASS_SS3(subject_ids=20, crop_wake_mins=0, load_eeg_only=True)
 # dataset = ClinicalDataset(subject_ids=1, crop_wake_mins=0)
 
 # dataset = [train_valid_ds, test_ds]

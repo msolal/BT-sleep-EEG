@@ -5,6 +5,10 @@ from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
 
 path_to_data = '/storage/store2/data/mass-bids/SS3/'
+channels = ['C3', 'C4', 'Cz', 'ECG I', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3',
+            'EOG Left Horiz', 'EOG Right Horiz', 'F3', 'F4', 'F7', 'F8', 'Fp1',
+            'Fp2', 'Fz', 'O1', 'O2', 'Oz', 'P3', 'P4', 'Pz', 'T3', 'T4', 'T5',
+            'T6']
 
 
 class MASS_SS3(BaseConcatDataset):
@@ -64,6 +68,7 @@ class MASS_SS3(BaseConcatDataset):
 
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
+        raw.pick_channels(channels)
         if load_eeg_only:
             raw.pick_types(eeg=True)
 
