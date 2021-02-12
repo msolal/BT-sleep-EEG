@@ -4,10 +4,14 @@ from mne_bids import BIDSPath, read_raw_bids
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
 
-path_to_data = '/media/pallanca/datapartition/maelys/data/BIDS/'
+path_to_data = '/storage/store2/data/mass-bids/SS3/'
+channels = ['C3', 'C4', 'Cz', 'ECG I', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3',
+            'EOG Left Horiz', 'EOG Right Horiz', 'F3', 'F4', 'F7', 'F8', 'Fp1',
+            'Fp2', 'Fz', 'O1', 'O2', 'Oz', 'P3', 'P4', 'Pz', 'T3', 'T4', 'T5',
+            'T6']
 
 
-class ClinicalDataset(BaseConcatDataset):
+class MASS_SS3(BaseConcatDataset):
     """MASS SS3 dataset.
     Contains overnight recordings from 62 healthy subjects.
 
@@ -61,8 +65,10 @@ class ClinicalDataset(BaseConcatDataset):
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
                   crop_wake_mins=False):
+
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
+        raw.pick_channels(channels)
         if load_eeg_only:
             raw.pick_types(eeg=True)
 

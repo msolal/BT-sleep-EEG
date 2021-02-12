@@ -5,7 +5,7 @@ import torch
 import numpy as np
 
 
-from datasets.mass import MASS_SS3
+from datasets.mass_bids import MASS_SS3
 from datasets.sleep_physionet import SleepPhysionet
 from datasets.clinical import ClinicalDataset
 from datautil.preprocess import zscore
@@ -29,8 +29,10 @@ from visualisation.visualisation import plot_confusion_matrix, plot_history
 # dataset = SleepPhysionet(subject_ids=list(range(30)),
 #                          recording_ids=[1],
 #                          crop_wake_mins=30)
-# dataset = MASS_SS3(subject_ids=list(range(1, 20)), crop_wake_mins=0)
-dataset = ClinicalDataset(subject_ids=1, crop_wake_mins=0)
+# dataset = MASS_SS3(subject_ids=None, crop_wake_mins=0)
+dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
+
+# dataset = [train_valid_ds, test_ds]
 
 # %%
 # 2. Preprocessing
@@ -47,6 +49,8 @@ preprocessors = [
 # Transform the data
 preprocess(dataset, preprocessors)
 
+# preprocess(dataset[0], preprocessors)
+# preprocess(dataset[1], preprocessors)
 
 # Extracting windows
 
@@ -68,14 +72,37 @@ windows_dataset = create_windows_from_events(
     window_size_samples=window_size_samples,
     window_stride_samples=window_size_samples, preload=True, mapping=mapping)
 
+# sfreq = [int(dataset[0].datasets[0].raw.info['sfreq']),
+#          int(dataset[1].datasets[0].raw.info['sfreq'])]
+# window_size_samples = [window_size_s * sfreq[0], window_size_s * sfreq[1]]
+
+# windows_dataset = [create_windows_from_events(
+#                    dataset[0], trial_start_offset_samples=0,
+#                    trial_stop_offset_samples=0,
+#                    window_size_samples=window_size_samples[0],
+#                    window_stride_samples=window_size_samples[0],
+#                    preload=True, mapping=mapping),
+#                   create_windows_from_events(dataset[1],
+#                    trial_start_offset_samples=0,
+#                    trial_stop_offset_samples=0,
+#                    window_size_samples=window_size_samples[1],
+#                    window_stride_samples=window_size_samples[1],
+#                    preload=True, mapping=mapping)]
+
 
 # Window preprocessing
 preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
+
+# preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
+# preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
+
 
 # %%
 # 3. Making train, valid and test splits
 train_set, valid_set, test_set = train_valid_test_split(windows_dataset,
                                                         0.6, 0.2, 0.2)
+# train_set, valid_set = train_valid_test_split(windows_dataset[0], 0.6, 0.2)
+# test_set = train_valid_test_split(windows_dataset[1], 0, 0, 1)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')
