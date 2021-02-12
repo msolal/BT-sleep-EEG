@@ -83,10 +83,13 @@ def save_final_df(fileref, final_df):
     csv_filepath = clean_annot_path + fileref
     final_df.to_csv(csv_filepath+'.csv')
 
-# %%
+# %% 
+import pandas as pd
 
+# %%
 annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
 fileref = 'AFju890504'
+# fileref = 'DEhe550820'
 annot_filepath = annot_path+fileref+'annot.csv'
 
 # %%
@@ -103,6 +106,45 @@ val_df['onset'] = val_df['onset'].transform(lambda x: x / 1e6)
 val_df['duration'] = val_df['duration'].transform(lambda x: x / 1e6)
 
 # %%
+th_next_onset = list(val_df['onset'] + val_df['duration'])
+val_df['th_next_onset'] = th_next_onset
+
+# %%
+onset_ok = []
+for i in range(len(val_df)-1):
+    onset_ok.append(True if val_df.iloc[i+1, 1] == val_df.iloc[i, 5] else False)
+val_df['onset_ok'] = [None] + onset_ok
+
+# %%
+problems = val_df[val_df['onset_ok'] == 'False']
+
+# %%
+df = pd.read_csv(annot_filepath, sep='\t', encoding='UTF-16 LE')
+column_labels = {i: c for (i, c) in enumerate(df.columns)}
+new_df = df[[column_labels[0],column_labels[4], column_labels[5], column_labels[7], column_labels[8]]]
+new_df.columns = ['sequence', 'onset', 'duration', 'description', 'validated']
+seq_to_keep = list(new_df['validated']=='Yes')
+new_df['onset'] = new_df['onset'].transform(lambda x: x / 1e6)
+new_df['duration'] = new_df['duration'].transform(lambda x: x / 1e6)
+
+# %%
+th_next_onset = list(new_df['onset'] + new_df['duration'])
+new_df['th_next_onset'] = th_next_onset
+
+# %%
+
+
+# %%
+onset_ok = []
+for i in range(len(new_df)-1):
+    onset_ok.append(True if new_df.iloc[i+1, 1] == new_df.iloc[i, 5] else False)
+new_df['onset_ok'] = [None] + onset_ok
+
+
+# %%
+
+
+# %%
 th_onset = list(val_df['onset'] + val_df['duration'])
 val_df['th_onset'] = [0] + th_onset[:-1]
 
@@ -111,26 +153,3 @@ onset_ok = []
 for i in range(1, len(val_df)):
     onset_ok.append(True if val_df.iloc[i, 1] == val_df.iloc[i, 5] else False)
 val_df['onset_ok'] = [None] + onset_ok
-
-
-# %%
-new_df = df[[column_labels[0],column_labels[4], column_labels[5], column_labels[7], column_labels[8]]]
-new_df.columns = ['sequence', 'onset', 'duration', 'description', 'validated']
-seq_to_keep = list(new_df['validated']=='Yes')
-new_df['onset'] = new_df['onset'].transform(lambda x: x / 1e6)
-new_df['duration'] = new_df['duration'].transform(lambda x: x / 1e6)
-
-# %%
-th_onset = list(new_df['onset'] + new_df['duration'])
-new_df['th_onset'] = [0] + new_onset[:-1]
-
-# %%
-onset_ok = []
-for i in range(1, len(new_df)):
-    onset_ok.append(True if new_df.iloc[i, 1] == new_df.iloc[i, 5] else False)
-new_df['onset_ok'] = [None] + onset_ok
-# %%
-annot_df = csv_to_df(annot_filepath, fileref)
-annot = df_to_annotation(annot_df)
-
-# %%
