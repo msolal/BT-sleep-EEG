@@ -30,7 +30,7 @@ from visualisation.visualisation import plot_confusion_matrix, plot_history
 #                          recording_ids=[1],
 #                          crop_wake_mins=30)
 # dataset = MASS_SS3(subject_ids=None, crop_wake_mins=0)
-dataset = ClinicalDataset(subject_ids=10, crop_wake_mins=0)
+dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
 
 # dataset = [train_valid_ds, test_ds]
 
