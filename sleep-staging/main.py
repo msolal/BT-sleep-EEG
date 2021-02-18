@@ -3,6 +3,7 @@
 
 import torch
 import numpy as np
+import os
 
 
 from datasets.mass_bids import MASS_SS3
@@ -26,11 +27,18 @@ from visualisation.visualisation import plot_confusion_matrix, plot_history
 # %%
 # 1. Loading the data
 
+plots_path = 'plots/MASS-60-usual_split/'
+try: 
+    os.mkdir(plots_path)
+    print(f'Directory {plots_path} created\n')
+except FileExistsError:
+    print(f'Directory {plots_path} already exists\n')
+
 # dataset = SleepPhysionet(subject_ids=list(range(30)),
 #                          recording_ids=[1],
 #                          crop_wake_mins=30)
-# dataset = MASS_SS3(subject_ids=None, crop_wake_mins=0)
-dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
+dataset = MASS_SS3(subject_ids=60, crop_wake_mins=0)
+# dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
 
 # dataset = [train_valid_ds, test_ds]
 
@@ -176,11 +184,11 @@ test_kappa = cohen_kappa_score(y_true, y_pred)
 print(f'Test balanced accuracy: {test_bal_acc:0.3f}')
 print(f'Test Cohen\'s kappa: {test_kappa:0.3f}')
 
-plot_history(clf)
+plot_history(clf, plots_path)
 
 # Finally, we also display the confusion matrix and classification report
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 conf_mat = confusion_matrix(y_true, y_pred)
-plot_confusion_matrix(conf_mat, classes_mapping)
+plot_confusion_matrix(conf_mat, classes_mapping, plots_path)
 
 print(classification_report(y_true, y_pred))

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 
-def plot_confusion_matrix(conf_mat, classes_mapping):
+def plot_confusion_matrix(conf_mat, classes_mapping, plots_path):
     ticks = list(classes_mapping.keys())
     tick_labels = classes_mapping.values()
 
@@ -25,12 +25,12 @@ def plot_confusion_matrix(conf_mat, classes_mapping):
     fig.colorbar(im, ax=ax, fraction=0.05, label='# examples')
     fig.tight_layout()
 
-    plt.savefig('plots/confusion_matrix', facecolor='w')
+    plt.savefig(plots_path + 'confusion_matrix', facecolor='w')
 
     return fig, ax
 
 
-def plot_history(clf):
+def plot_history(clf, plots_path):
     # Extract loss and bal accuracy values for plotting from history object
     df = pd.DataFrame(clf.history.to_list())
     df[['train_mis_clf', 'valid_mis_clf']] = 100 - df[
@@ -64,4 +64,4 @@ def plot_history(clf):
                linestyle=':', label='Valid'))
     plt.legend(handles, [h.get_label() for h in handles], fontsize=14)
     plt.tight_layout()
-    plt.savefig('plots/history_plot', facecolor='w')
+    plt.savefig(plots_path + 'history_plot', facecolor='w')
