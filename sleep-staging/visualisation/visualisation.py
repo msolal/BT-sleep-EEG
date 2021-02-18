@@ -3,7 +3,16 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 
-def plot_confusion_matrix(conf_mat, classes_mapping, plots_path):
+def save_score(plots_path, test_bal_acc, test_kappa):
+    bal = f'Test balanced accuracy: {test_bal_acc:0.3f}\n'
+    kappa = f'Test Cohen\'s kappa: {test_kappa:0.3f}\n'
+    print(bal, kappa)
+    score_file = open(plots_path+'scores.txt', 'w')
+    score_file.write(bal, kappa)
+    score_file.close()
+    
+    
+def plot_confusion_matrix(plots_path, conf_mat, classes_mapping):
     ticks = list(classes_mapping.keys())
     tick_labels = classes_mapping.values()
 
@@ -30,7 +39,7 @@ def plot_confusion_matrix(conf_mat, classes_mapping, plots_path):
     return fig, ax
 
 
-def plot_history(clf, plots_path):
+def plot_history(plots_path, clf):
     # Extract loss and bal accuracy values for plotting from history object
     df = pd.DataFrame(clf.history.to_list())
     df[['train_mis_clf', 'valid_mis_clf']] = 100 - df[

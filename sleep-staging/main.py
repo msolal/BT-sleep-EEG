@@ -21,7 +21,7 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from visualisation.visualisation import plot_confusion_matrix, plot_history
+from visualisation.visualisation import save_score, plot_confusion_matrix, plot_history
 
 
 # %%
@@ -181,14 +181,14 @@ y_pred = clf.predict(test_set)
 # 6. Visualising results
 test_bal_acc = balanced_accuracy_score(y_true, y_pred)
 test_kappa = cohen_kappa_score(y_true, y_pred)
-print(f'Test balanced accuracy: {test_bal_acc:0.3f}')
-print(f'Test Cohen\'s kappa: {test_kappa:0.3f}')
+save_score(test_bal_acc, test_kappa)
 
-plot_history(clf, plots_path)
+
+plot_history(plots_path, clf)
 
 # Finally, we also display the confusion matrix and classification report
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 conf_mat = confusion_matrix(y_true, y_pred)
-plot_confusion_matrix(conf_mat, classes_mapping, plots_path)
+plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
 
 print(classification_report(y_true, y_pred))
