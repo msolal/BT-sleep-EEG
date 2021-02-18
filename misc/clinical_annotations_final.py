@@ -145,7 +145,7 @@ def get_prev(data, yes):
             prev_idx -= 1          
         
 def get_next(data, yes):
-    yes_idx, yes_onset, _, _, _, yes_offset, _, _ = yes
+    yes_idx, yes_offset= yes[0], yes[5]
     next_idx = yes_idx + 1
     while True and next_idx < len(data):
         next_offset = data[next_idx][5]
