@@ -104,7 +104,7 @@ def merge_identical_events(data):
             prev_idx = prev_keep_idx(data, idx)
             _, prev_onset, _, prev_desc, _, prev_offset, _, _ = data[prev_idx]
             next_idx = next_keep_idx(data, idx)
-	    next_onset = data[next_idx][1]
+            next_onset = data[next_idx][1]
             if desc == prev_desc:
                 data[prev_idx][5] = min(max(offset, prev_offset), next_onset)
                 data[prev_idx][2] = data[prev_idx][5] - data[prev_idx][1]
