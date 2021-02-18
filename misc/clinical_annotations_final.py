@@ -70,12 +70,16 @@ def select_events_clinical(data):
     
 
 def prev_keep_idx(data, idx):
+    if idx == 0:
+        return None
     prev_idx = idx - 1
     while data[prev_idx][7] != True and prev_idx >= 0:
         prev_idx -= 1
     return prev_idx
 
 def next_keep_idx(data, idx):
+    if idx == len(data) - 1:
+        return None
     next_idx = idx + 1
     while data[next_idx][7] != True and next_idx < len(data) - 1:
         next_idx += 1
@@ -104,9 +108,9 @@ def merge_identical_events(data):
             prev_idx = prev_keep_idx(data, idx)
             prev_desc, prev_offset = data[prev_idx][3], data[prev_idx][5]
             next_idx = next_keep_idx(data, idx)
-            next_onset = data[next_idx][1]
             if desc == prev_desc:
-                if next_onset < len(data) - 1:
+                if next_idx is not None:
+                    next_onset = data[next_idx][1]
                     data[prev_idx][5] = min(max(offset, prev_offset), next_onset)
                 else:
                     data[prev_idx][5] = max(offset, prev_offset)
@@ -162,9 +166,10 @@ def get_next(data, yes):
 
 
 for fileref in filerefs:
-    print(fileref)
-    if fileref in {'MEga720912', 'WAre750130', 'MOas940705', 'COma390828', 'OZch790212', 'PRma490730'}:
+    if fileref in {'MEga720912', 'WAre750130', 'MOas940705', 'OZch790212', 'PRma490730'}:
+        print(fileref)
         annot_filepath = annot_path+fileref+'annot.csv'
         final_df = csv_to_df(annot_filepath, fileref)
         my_annot = df_to_annotation(final_df)
 
+# COma390828
