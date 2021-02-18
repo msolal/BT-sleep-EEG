@@ -27,17 +27,17 @@ from visualisation.visualisation import save_score, plot_confusion_matrix, plot_
 # %%
 # 1. Loading the data
 
-plots_path = 'plots/MASS-60-usual_split/'
+plots_path = 'plots/SleepPhysionet-60-usual_split/'
 try: 
     os.mkdir(plots_path)
     print(f'Directory {plots_path} created\n')
 except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
-# dataset = SleepPhysionet(subject_ids=list(range(30)),
-#                          recording_ids=[1],
-#                          crop_wake_mins=30)
-dataset = MASS_SS3(subject_ids=60, crop_wake_mins=0)
+dataset = SleepPhysionet(subject_ids=list(range(60)),
+                         recording_ids=[1],
+                         crop_wake_mins=30)
+# dataset = MASS_SS3(subject_ids=60, crop_wake_mins=0)
 # dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
 
 # dataset = [train_valid_ds, test_ds]
