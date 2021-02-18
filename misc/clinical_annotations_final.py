@@ -28,12 +28,6 @@ filerefs = [os.path.basename(file).strip('annot.csv') for file in files]
 clean_annot_path = (
     '/media/pallanca/datapartition/maelys/data/clean_annotations/')
 
-for fileref in filerefs:
-    print(fileref)
-    annot_filepath = annot_path+fileref+'annot.csv'
-    final_df = csv_to_df(annot_filepath, fileref)
-    my_annot = df_to_annotation(final_df)
-
 
 def csv_to_df(filepath, fileref):
     """ Get csv file as pandas dataframe
@@ -77,13 +71,13 @@ def select_events_clinical(data):
 
 def prev_keep_idx(data, idx):
     prev_idx = idx - 1
-    while data[prev_idx][7] != True:
+    while data[prev_idx][7] != True and prev_idx >= 0:
         prev_idx -= 1
     return prev_idx
 
 def next_keep_idx(data, idx):
     next_idx = idx + 1
-    while data[next_idx][7] != True:
+    while data[next_idx][7] != True and next_idx < len(data) - 1:
         next_idx += 1
     return next_idx
 
@@ -109,8 +103,8 @@ def merge_identical_events(data):
             idx, onset, _, desc, _, offset, _, _ = line
             prev_idx = prev_keep_idx(data, idx)
             _, prev_onset, _, prev_desc, _, prev_offset, _, _ = data[prev_idx]
-            next_idx= next_keep_idx(data, idx)
-            next_onset = data[next_idx][1]
+            next_idx = next_keep_idx(data, idx)
+	    next_onset = data[next_idx][1]
             if desc == prev_desc:
                 data[prev_idx][5] = min(max(offset, prev_offset), next_onset)
                 data[prev_idx][2] = data[prev_idx][5] - data[prev_idx][1]
@@ -162,3 +156,12 @@ def get_next(data, yes):
         elif next_offset <= yes_offset:
             data[next_idx][7] = False
             next_idx += 1
+
+
+for fileref in filerefs:
+    print(fileref)
+    if fileref not in {'MEga720912', 'WAre750130', 'MOas940705', 'COma390828', 'OZch790212', 'PRma490730'}:
+        annot_filepath = annot_path+fileref+'annot.csv'
+        final_df = csv_to_df(annot_filepath, fileref)
+        my_annot = df_to_annotation(final_df)
+
