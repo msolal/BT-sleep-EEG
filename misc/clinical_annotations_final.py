@@ -100,13 +100,16 @@ def compute_offset(data):
 def merge_identical_events(data):
     for line in data:
         if line[6] == False and line[7] == True:
-            idx, onset, _, desc, _, offset, _, _ = line
+            idx, desc, offset= line[0], line[3], line[5]
             prev_idx = prev_keep_idx(data, idx)
-            _, prev_onset, _, prev_desc, _, prev_offset, _, _ = data[prev_idx]
+            prev_desc, prev_offset = data[prev_idx][3], data[prev_idx][5]
             next_idx = next_keep_idx(data, idx)
             next_onset = data[next_idx][1]
             if desc == prev_desc:
-                data[prev_idx][5] = min(max(offset, prev_offset), next_onset)
+                if next_onset < len(data) - 1:
+                    data[prev_idx][5] = min(max(offset, prev_offset), next_onset)
+                else:
+                    data[prev_idx][5] = max(offset, prev_offset)
                 data[prev_idx][2] = data[prev_idx][5] - data[prev_idx][1]
                 data[idx][7] = False
     return data
@@ -126,7 +129,7 @@ def save_final_df(fileref, final_df):
 
 
 def get_prev(data, yes):
-    yes_idx, yes_onset, _, yes_desc, _, yes_offset, _, _ = yes
+    yes_idx, yes_onset = yes[0], yes[1]
     prev_idx = yes_idx - 1
     while True and prev_idx >= 0:
         prev_offset = data[prev_idx][5]
@@ -160,7 +163,7 @@ def get_next(data, yes):
 
 for fileref in filerefs:
     print(fileref)
-    if fileref not in {'MEga720912', 'WAre750130', 'MOas940705', 'COma390828', 'OZch790212', 'PRma490730'}:
+    if fileref in {'MEga720912', 'WAre750130', 'MOas940705', 'COma390828', 'OZch790212', 'PRma490730'}:
         annot_filepath = annot_path+fileref+'annot.csv'
         final_df = csv_to_df(annot_filepath, fileref)
         my_annot = df_to_annotation(final_df)
