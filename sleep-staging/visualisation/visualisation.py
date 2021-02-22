@@ -8,7 +8,8 @@ def save_score(plots_path, test_bal_acc, test_kappa):
     kappa = f'Test Cohen\'s kappa: {test_kappa:0.3f}\n'
     print(bal, kappa)
     score_file = open(plots_path+'scores.txt', 'w')
-    score_file.write(bal, kappa)
+    score_file.write(bal)
+    score_file.write(kappa)
     score_file.close()
     
     

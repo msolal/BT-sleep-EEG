@@ -54,7 +54,7 @@ References
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=[0, 1], recording_ids=[1], crop_wake_mins=30)
+    subject_ids=list(range(61)), recording_ids=[1], crop_wake_mins=0)
 
 
 ######################################################################
@@ -143,9 +143,9 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 # in this case using the ``subject`` column. Here, we split the examples per subject.
 #
 
-splitted = windows_dataset.split('subject')
-train_set = splitted['0']
-valid_set = splitted['1']
+from datautil.split import train_valid_test_split
+
+train_set, valid_set, _ = train_valid_test_split(windows_dataset, 0.75, 0.25, 0)
 
 # Print number of examples per class
 print(train_set.datasets[0].windows)

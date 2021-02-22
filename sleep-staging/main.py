@@ -1,10 +1,10 @@
 # %%
 # 0. Setting up the environment
 
-import torch
+# import torch
 import numpy as np
 import os
-
+import torch
 
 from datasets.mass_bids import MASS_SS3
 from datasets.sleep_physionet import SleepPhysionet
@@ -27,20 +27,23 @@ from visualisation.visualisation import save_score, plot_confusion_matrix, plot_
 # %%
 # 1. Loading the data
 
-plots_path = 'plots/SleepPhysionet-60-usual_split/'
+#plots_path = 'plots/SleepPhysionet-60-usual_split-bis/'
+#plots_path = 'plots/MASS_SleepPhysionet-36_12_12/'
+plots_path = 'plots/SleepPhysionet_MASS-36_12_12/'
+
 try: 
     os.mkdir(plots_path)
     print(f'Directory {plots_path} created\n')
 except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
-dataset = SleepPhysionet(subject_ids=list(range(60)),
-                         recording_ids=[1],
-                         crop_wake_mins=30)
-# dataset = MASS_SS3(subject_ids=60, crop_wake_mins=0)
-# dataset = ClinicalDataset(subject_ids=20, crop_wake_mins=0)
+#dataset = SleepPhysionet(subject_ids=60, recording_ids=[1], crop_wake_mins=30)
 
-# dataset = [train_valid_ds, test_ds]
+#train_valid_ds = MASS_SS3(subject_ids=48, crop_wake_mins=30)
+#test_ds = SleepPhysionet(subject_ids=12, recording_ids=[1], crop_wake_mins=30)
+train_valid_ds = SleepPhysionet(subject_ids=48, recording_ids=[1], crop_wake_mins=30)
+test_ds = MASS_SS3(subject_ids=12, crop_wake_mins=30)
+dataset = [train_valid_ds, test_ds]
 
 # %%
 # 2. Preprocessing
@@ -55,10 +58,9 @@ preprocessors = [
 ]
 
 # Transform the data
-preprocess(dataset, preprocessors)
-
-# preprocess(dataset[0], preprocessors)
-# preprocess(dataset[1], preprocessors)
+#preprocess(dataset, preprocessors)
+preprocess(dataset[0], preprocessors)
+preprocess(dataset[1], preprocessors)
 
 # Extracting windows
 
@@ -71,46 +73,45 @@ mapping = {  # We merge stages 3 and 4 following AASM standards.
     'Sleep stage R': 4
 }
 
+#window_size_s = 30
+#sfreq = int(dataset.datasets[0].raw.info['sfreq'])
+#window_size_samples = window_size_s * sfreq
+
+#windows_dataset = create_windows_from_events(
+    #dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
+    #window_size_samples=window_size_samples,
+    #window_stride_samples=window_size_samples, preload=True, mapping=mapping)
+
 window_size_s = 30
-sfreq = int(dataset.datasets[0].raw.info['sfreq'])
-window_size_samples = window_size_s * sfreq
+sfreq = [int(dataset[0].datasets[0].raw.info['sfreq']),
+         int(dataset[1].datasets[0].raw.info['sfreq'])]
+window_size_samples = [window_size_s * sfreq[0], window_size_s * sfreq[1]]
 
-windows_dataset = create_windows_from_events(
-    dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
-    window_size_samples=window_size_samples,
-    window_stride_samples=window_size_samples, preload=True, mapping=mapping)
-
-# sfreq = [int(dataset[0].datasets[0].raw.info['sfreq']),
-#          int(dataset[1].datasets[0].raw.info['sfreq'])]
-# window_size_samples = [window_size_s * sfreq[0], window_size_s * sfreq[1]]
-
-# windows_dataset = [create_windows_from_events(
-#                    dataset[0], trial_start_offset_samples=0,
-#                    trial_stop_offset_samples=0,
-#                    window_size_samples=window_size_samples[0],
-#                    window_stride_samples=window_size_samples[0],
-#                    preload=True, mapping=mapping),
-#                   create_windows_from_events(dataset[1],
-#                    trial_start_offset_samples=0,
-#                    trial_stop_offset_samples=0,
-#                    window_size_samples=window_size_samples[1],
-#                    window_stride_samples=window_size_samples[1],
-#                    preload=True, mapping=mapping)]
+windows_dataset = [create_windows_from_events(
+                   dataset[0], trial_start_offset_samples=0,
+                   trial_stop_offset_samples=0,
+                   window_size_samples=window_size_samples[0],
+                   window_stride_samples=window_size_samples[0],
+                   preload=True, mapping=mapping),
+                  create_windows_from_events(dataset[1],
+                   trial_start_offset_samples=0,
+                   trial_stop_offset_samples=0,
+                   window_size_samples=window_size_samples[1],
+                   window_stride_samples=window_size_samples[1],
+                   preload=True, mapping=mapping)]
 
 
 # Window preprocessing
-preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
-
-# preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
-# preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
+#preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
+preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
+preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
 
 
 # %%
 # 3. Making train, valid and test splits
-train_set, valid_set, test_set = train_valid_test_split(windows_dataset,
-                                                        0.6, 0.2, 0.2)
-# train_set, valid_set = train_valid_test_split(windows_dataset[0], 0.6, 0.2)
-# test_set = train_valid_test_split(windows_dataset[1], 0, 0, 1)
+#train_set, valid_set, test_set = train_valid_test_split(windows_dataset)
+train_set, valid_set, _ = train_valid_test_split(windows_dataset[0], 0.75, 0.25, 0)
+_, _, test_set = train_valid_test_split(windows_dataset[1], 0, 0, 1)
 
 print('Number of windows in each set:')
 print(f'Training: {train_set.datasets[0].windows}')
@@ -130,11 +131,13 @@ n_channels = train_set[0][0].shape[0]
 input_size_samples = train_set[0][0].shape[1]
 
 # Create model
+#input_size_s=input_size_samples / sfreq
+input_size_s=input_size_samples / sfreq[0]
 model = SleepStagerChambon2018(
     n_channels,
     sfreq,
     n_classes=n_classes,
-    input_size_s=input_size_samples / sfreq
+    input_size_s=input_size_s
 )
 
 # Export model to device
@@ -181,7 +184,7 @@ y_pred = clf.predict(test_set)
 # 6. Visualising results
 test_bal_acc = balanced_accuracy_score(y_true, y_pred)
 test_kappa = cohen_kappa_score(y_true, y_pred)
-save_score(test_bal_acc, test_kappa)
+save_score(plots_path, test_bal_acc, test_kappa)
 
 
 plot_history(plots_path, clf)

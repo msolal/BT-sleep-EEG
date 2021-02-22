@@ -37,10 +37,27 @@ class SleepPhysionet(BaseConcatDataset):
     """
     def __init__(self, subject_ids=None, recording_ids=None, preload=False,
                  load_eeg_only=True, crop_wake_mins=30):
+        
+        all_sub = list(range(36))+[37, 38]+list(range(40, 52)) +list(range(53, 68))+list(range(78))+list(range(80, 82))
+        
         if subject_ids is None:
-            subject_ids = range(83)
+            subject_ids = all_sub
+        elif type(subject_ids) == int:
+            subject_ids = all_sub[:subject_ids]
+        elif len(set(subject_ids).intersection(all_sub)) != len(subject_ids):
+            subject_ids = [x for x in subject_ids if x in all_sub]
+            print('Warning: selected subject which doesn\'t exist')
+            
         if recording_ids is None:
             recording_ids = [1, 2]
+            
+        if recording_ids == [1]:
+            if 36 in subject_ids:
+                subject_ids.remove(36)
+                print('Warning: selected subject which doesn\'t exist')
+            if 52 in subject_ids:
+                subject_ids.remove(52)
+                print('Warning: selected subject which doesn\'t exist')
 
         paths = fetch_data(
             subject_ids, recording=recording_ids, on_missing='warn')
@@ -79,8 +96,10 @@ class SleepPhysionet(BaseConcatDataset):
             # Crop raw
             tmin = annots[int(sleep_event_inds[0])]['onset'] - \
                 crop_wake_mins * 60
+            tmin = max(raw.times[0], tmin)
             tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
                 crop_wake_mins * 60
+            tmax = min(tmax, raw.times[-1])
             raw.crop(tmin=tmin, tmax=tmax)
 
         # Rename EEG channels
