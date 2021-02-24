@@ -1,11 +1,21 @@
-def train_valid_test_split(windows_dataset, train=0.6, valid=0.2, test=0.2):
+import random
+
+
+def train_valid_test_split(windows_dataset, shuffle=True, train=0.6, valid=0.2, test=0.2):
     assert(train+valid+test == 1)
     nb_ds = len(windows_dataset.datasets)
     train_size = int(nb_ds*train)
     valid_size = int(nb_ds*valid)
-    train_idx = list(range(train_size))
-    valid_idx = list(range(train_size, train_size+valid_size))
-    test_idx = list(range(train_size+valid_size, nb_ds))
+    if not shuffle:
+        train_idx = list(range(train_size))
+        valid_idx = list(range(train_size, train_size+valid_size))
+        test_idx = list(range(train_size+valid_size, nb_ds))
+    else:
+        ds_idx = list(range(nb_ds))
+        random.shuffle(ds_idx)
+        train_idx = ds_idx[:train_size]
+        valid_idx = ds_idx[train_size: train_size+valid_size]
+        test_idx = ds_idx[train_size+valid_size: nb_ds]
     if len(train_idx) == 0:
         if len(valid_idx) == 0:
             splitted = windows_dataset.split(by=[test_idx])

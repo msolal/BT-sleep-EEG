@@ -36,7 +36,7 @@ class SleepPhysionet(BaseConcatDataset):
         dataset. Default of 30 mins.
     """
     def __init__(self, subject_ids=None, recording_ids=None, preload=False,
-                 load_eeg_only=True, crop_wake_mins=30):
+                 load_eeg_only=True, crop_wake_mins=30, resample=False):
         
         all_sub = list(range(36))+[37, 38]+list(range(40, 52)) +list(range(53, 68))+list(range(78))+list(range(80, 82))
         
@@ -73,7 +73,7 @@ class SleepPhysionet(BaseConcatDataset):
 
     @staticmethod
     def _load_raw(raw_fname, annot_fname, preload, load_eeg_only=True,
-                  crop_wake_mins=False):
+                  crop_wake_mins=30, resample=False):
         ch_mapping = {
             'EOG horizontal': 'eog',
             'Resp oro-nasal': 'misc',
@@ -86,6 +86,9 @@ class SleepPhysionet(BaseConcatDataset):
         raw = mne.io.read_raw_edf(raw_fname, preload=preload, exclude=exclude)
         annots = mne.read_annotations(annot_fname)
         raw.set_annotations(annots, emit_warning=False)
+
+        if type(resample) == int:
+            raw.resample(resample)
 
         if crop_wake_mins > 0:
             # Find first and last sleep stages

@@ -21,29 +21,29 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from visualisation.visualisation import save_score, plot_confusion_matrix, plot_history
+from visualisation.visualisation import save_score, plot_confusion_matrix, plot_history, view_nb_windows, plot_classification_report
 
 
 # %%
 # 1. Loading the data
 
-#plots_path = 'plots/SleepPhysionet-60-usual_split-bis/'
-#plots_path = 'plots/MASS_SleepPhysionet-36_12_12/'
-plots_path = 'plots/SleepPhysionet_MASS-36_12_12/'
+plots_path = 'plots/MASS_100-all-batch16_10epochs-shuffle_usual_split/'
+# plots_path = 'plots/MASS_SleepPhysionet-36_12_12/'
+# plots_path = 'plots/SleepPhysionet_MASS-36_12_12/'
 
-try: 
+try:
     os.mkdir(plots_path)
     print(f'Directory {plots_path} created\n')
 except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
-#dataset = SleepPhysionet(subject_ids=60, recording_ids=[1], crop_wake_mins=30)
+dataset = MASS_SS3(subject_ids=None, crop_wake_mins=30, resample=100)
 
-#train_valid_ds = MASS_SS3(subject_ids=48, crop_wake_mins=30)
-#test_ds = SleepPhysionet(subject_ids=12, recording_ids=[1], crop_wake_mins=30)
-train_valid_ds = SleepPhysionet(subject_ids=48, recording_ids=[1], crop_wake_mins=30)
-test_ds = MASS_SS3(subject_ids=12, crop_wake_mins=30)
-dataset = [train_valid_ds, test_ds]
+# train_valid_ds = MASS_SS3(subject_ids=48, crop_wake_mins=30)
+# test_ds = SleepPhysionet(subject_ids=12, recording_ids=[1], crop_wake_mins=30)
+# train_valid_ds = SleepPhysionet(subject_ids=48, recording_ids=[1], crop_wake_mins=30)
+# test_ds = MASS_SS3(subject_ids=12, crop_wake_mins=30)
+# dataset = [train_valid_ds, test_ds]
 
 # %%
 # 2. Preprocessing
@@ -58,9 +58,9 @@ preprocessors = [
 ]
 
 # Transform the data
-#preprocess(dataset, preprocessors)
-preprocess(dataset[0], preprocessors)
-preprocess(dataset[1], preprocessors)
+preprocess(dataset, preprocessors)
+# preprocess(dataset[0], preprocessors)
+# preprocess(dataset[1], preprocessors)
 
 # Extracting windows
 
@@ -73,50 +73,49 @@ mapping = {  # We merge stages 3 and 4 following AASM standards.
     'Sleep stage R': 4
 }
 
-#window_size_s = 30
-#sfreq = int(dataset.datasets[0].raw.info['sfreq'])
-#window_size_samples = window_size_s * sfreq
-
-#windows_dataset = create_windows_from_events(
-    #dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
-    #window_size_samples=window_size_samples,
-    #window_stride_samples=window_size_samples, preload=True, mapping=mapping)
-
 window_size_s = 30
-sfreq = [int(dataset[0].datasets[0].raw.info['sfreq']),
-         int(dataset[1].datasets[0].raw.info['sfreq'])]
-window_size_samples = [window_size_s * sfreq[0], window_size_s * sfreq[1]]
+sfreq = int(dataset.datasets[0].raw.info['sfreq'])
+window_size_samples = window_size_s * sfreq
 
-windows_dataset = [create_windows_from_events(
-                   dataset[0], trial_start_offset_samples=0,
-                   trial_stop_offset_samples=0,
-                   window_size_samples=window_size_samples[0],
-                   window_stride_samples=window_size_samples[0],
-                   preload=True, mapping=mapping),
-                  create_windows_from_events(dataset[1],
-                   trial_start_offset_samples=0,
-                   trial_stop_offset_samples=0,
-                   window_size_samples=window_size_samples[1],
-                   window_stride_samples=window_size_samples[1],
-                   preload=True, mapping=mapping)]
+windows_dataset = create_windows_from_events(
+    dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
+    window_size_samples=window_size_samples,
+    window_stride_samples=window_size_samples, preload=True, mapping=mapping)
+
+# window_size_s = 30
+# sfreq = 100
+# window_size_samples = [window_size_s * sfreq, window_size_s * sfreq]
+
+# windows_dataset = [create_windows_from_events(
+#                    dataset[0], trial_start_offset_samples=0,
+#                    trial_stop_offset_samples=0,
+#                    window_size_samples=window_size_samples[0],
+#                    window_stride_samples=window_size_samples[0],
+#                    preload=True, mapping=mapping),
+#                   create_windows_from_events(dataset[1],
+#                    trial_start_offset_samples=0,
+#                    trial_stop_offset_samples=0,
+#                    window_size_samples=window_size_samples[1],
+#                    window_stride_samples=window_size_samples[1],
+#                    preload=True, mapping=mapping)]
 
 
 # Window preprocessing
-#preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
-preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
-preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
+preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
+# preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
+# preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
 
 
 # %%
 # 3. Making train, valid and test splits
-#train_set, valid_set, test_set = train_valid_test_split(windows_dataset)
-train_set, valid_set, _ = train_valid_test_split(windows_dataset[0], 0.75, 0.25, 0)
-_, _, test_set = train_valid_test_split(windows_dataset[1], 0, 0, 1)
+train_set, valid_set, test_set = train_valid_test_split(windows_dataset, shuffle=True)
+# train_set, valid_set, _ = train_valid_test_split(windows_dataset[0], shuffle=True, 0.75, 0.25, 0)
+# _, _, test_set = train_valid_test_split(windows_dataset[1], shuffle=True, 0, 0, 1)
 
-print('Number of windows in each set:')
-print(f'Training: {train_set.datasets[0].windows}')
-print(f'Validation: {valid_set.datasets[0].windows}')
-print(f'Test: {test_set.datasets[0].windows}')
+print(view_nb_windows(plots_path, 
+                      train_set.datasets[0].windows,
+                      valid_set.datasets[0].windows,
+                      test_set.datasets[0].windows))
 
 # %%
 # 4. Creating the model
@@ -131,13 +130,11 @@ n_channels = train_set[0][0].shape[0]
 input_size_samples = train_set[0][0].shape[1]
 
 # Create model
-#input_size_s=input_size_samples / sfreq
-input_size_s=input_size_samples / sfreq[0]
 model = SleepStagerChambon2018(
     n_channels,
-    sfreq,
+    sfreq=sfreq,
     n_classes=n_classes,
-    input_size_s=input_size_s
+    input_size_s=input_size_samples / sfreq
 )
 
 # Export model to device
@@ -148,7 +145,7 @@ model = model.to(device)
 # 5. Training
 
 lr = 5e-4
-n_epochs = 5
+n_epochs = 10
 batch_size = 16
 
 train_bal_acc = EpochScoring(
@@ -186,12 +183,14 @@ test_bal_acc = balanced_accuracy_score(y_true, y_pred)
 test_kappa = cohen_kappa_score(y_true, y_pred)
 save_score(plots_path, test_bal_acc, test_kappa)
 
-
 plot_history(plots_path, clf)
 
 # Finally, we also display the confusion matrix and classification report
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
-conf_mat = confusion_matrix(y_true, y_pred)
+conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
 plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
+print(conf_mat)
 
-print(classification_report(y_true, y_pred))
+class_report = classification_report(y_true, y_pred)
+plot_classification_report(plots_path, class_report, classes_mapping)
+print(class_report)

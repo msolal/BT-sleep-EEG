@@ -1,0 +1,2 @@
+Test balanced accuracy: 0.785
+Test Cohen's kappa: 0.782

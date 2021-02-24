@@ -28,7 +28,7 @@ class ClinicalDataset(BaseConcatDataset):
         dataset. Default of 30 mins.
     """
     def __init__(self, subject_ids=None, preload=False,
-                 load_eeg_only=True, crop_wake_mins=30):
+                 load_eeg_only=True, crop_wake_mins=30, resample=False):
 
         all_sub = pd.read_csv(path_to_data + 'participants.tsv',
                               delimiter='\t', skiprows=1,
@@ -60,11 +60,14 @@ class ClinicalDataset(BaseConcatDataset):
 
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
-                  crop_wake_mins=False):
+                  crop_wake_mins=False, resample=False):
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
         if load_eeg_only:
             raw.pick_types(eeg=True)
+
+        if type(resample) == int:
+            raw.resample(resample)
 
         if crop_wake_mins > 0:
             # Find first and last sleep stages

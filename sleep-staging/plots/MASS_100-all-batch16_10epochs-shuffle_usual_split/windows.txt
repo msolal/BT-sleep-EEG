@@ -1,0 +1,19 @@
+Number of windows in each set:
+Training: <Epochs |  447 events (all good), 0 - 29.9961 sec, baseline off, ~523.9 MB, data loaded, with metadata,
+ 'Sleep stage 1': 128
+ 'Sleep stage 2': 138
+ 'Sleep stage 3': 83
+ 'Sleep stage R': 43
+ 'Sleep stage W': 55>
+Validation: <Epochs |  1536 events (all good), 0 - 14.998 sec, baseline off, ~1.76 GB, data loaded, with metadata,
+ 'Sleep stage 1': 202
+ 'Sleep stage 2': 762
+ 'Sleep stage 3': 76
+ 'Sleep stage R': 276
+ 'Sleep stage W': 220>
+Test: <Epochs |  620 events (all good), 0 - 29.9961 sec, baseline off, ~726.6 MB, data loaded, with metadata,
+ 'Sleep stage 1': 15
+ 'Sleep stage 2': 365
+ 'Sleep stage 3': 126
+ 'Sleep stage R': 61
+ 'Sleep stage W': 53>
