@@ -27,7 +27,7 @@ class ClinicalDataset(BaseConcatDataset):
         and after the last sleep event. Used to reduce the imbalance in this
         dataset. Default of 30 mins.
     """
-    def __init__(self, subject_ids=None, preload=False,
+    def __init__(self, subject_ids=None, preload=True,
                  load_eeg_only=True, crop_wake_mins=30, resample=False):
 
         all_sub = pd.read_csv(path_to_data + 'participants.tsv',
@@ -53,7 +53,8 @@ class ClinicalDataset(BaseConcatDataset):
         for path in bids_paths:
             raw, desc = self._load_raw(path, preload=preload,
                                        load_eeg_only=load_eeg_only,
-                                       crop_wake_mins=crop_wake_mins)
+                                       crop_wake_mins=crop_wake_mins,
+                                       resample=resample)
             base_ds = BaseDataset(raw, desc)
             all_base_ds.append(base_ds)
         super().__init__(all_base_ds)
@@ -85,6 +86,6 @@ class ClinicalDataset(BaseConcatDataset):
 
         basename = bids_path.basename
         sub_nb = basename[4:]
-        desc = pd.Series({'subject': sub_nb}, name='')
+        desc = pd.Series({'subject': sub_nb, 'dataset': 'Clinical'}, name='')
 
         return raw, desc

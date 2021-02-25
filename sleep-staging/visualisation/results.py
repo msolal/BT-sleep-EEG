@@ -8,14 +8,6 @@ from matplotlib.lines import Line2D
 cmap = sns.cubehelix_palette(50)
 
 
-def view_nb_windows(plots_path, train_set_windows, valid_set_windows, test_set_windows):
-    windows = (f'Number of windows in each set:\nTraining: {train_set_windows}\nValidation: {valid_set_windows}\nTest: {test_set_windows}\n')
-    windows_file = open(plots_path+'windows.txt', 'w')
-    windows_file.write(windows)
-    windows_file.close()
-    return windows
-
-
 def plot_history(plots_path, clf):
     # Extract loss and bal accuracy values for plotting from history object
     df = pd.DataFrame(clf.history.to_list())
