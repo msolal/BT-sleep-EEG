@@ -43,11 +43,11 @@ train_valid_size = 60
 print_train_test = train_valid+'_'+test if train_test_different else train_valid
 print_size = f'{train_valid_size}_{test_size}' if train_test_different else str(train_valid_size)
 train_test = [train_valid, test] if train_test_different else [train_valid]
-sfreq = 100
+sfreq = 256
 window_size_s = 30
 lr = 5e-4
 n_epochs = 10
-batch_size = 8
+batch_size = 16
 
 plots_path = f'plots/{print_train_test}_{sfreq}-{print_size}-batch{batch_size}_{n_epochs}epochs/'
 
