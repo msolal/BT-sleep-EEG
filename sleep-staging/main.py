@@ -5,13 +5,14 @@ import numpy as np
 import os
 import torch
 
+from braindecode.datasets import BaseConcatDataset
 from datasets.mass_bids import MASS_SS3
 from datasets.sleep_physionet import SleepPhysionet
 from datasets.clinical import ClinicalDataset
 from datautil.preprocess import zscore
 from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
 from datautil.windowers import create_windows_from_events
-from datautil.split import train_valid_test_split, split_by_events
+from datautil.split import split_by_events
 from visualisation.windows import view_nb_windows
 from util import set_random_seeds
 from models.sleep_stager_chambon import SleepStagerChambon2018
@@ -21,7 +22,8 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from visualisation.results import save_score, plot_confusion_matrix, plot_history, plot_classification_report
+from visualisation.results import (save_score, plot_confusion_matrix, 
+                                   plot_history, plot_classification_report)
 
 
 # %%
@@ -35,19 +37,24 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 
-train_test_different = False
-train_valid = 'Clinical'
+train_test_diff = False
+preprocessed = True
+train_valid = 'MASS'
 train_valid_size = 60
-# test = 'MASS'
-# test_size = 0
-print_train_test = train_valid+'_'+test if train_test_different else train_valid
-print_size = f'{train_valid_size}_{test_size}' if train_test_different else str(train_valid_size)
-train_test = [train_valid, test] if train_test_different else [train_valid]
-sfreq = 256
+test = 'MASS'
+test_size = 0
+sfreq = 100
 window_size_s = 30
 lr = 5e-4
 n_epochs = 10
 batch_size = 8
+
+print_train_test = f'{train_valid}_{test}' if train_test_diff else train_valid
+print_size = (
+    f'{train_valid_size}_{test_size}' if train_test_diff
+    else str(train_valid_size))
+train_test = [train_valid, test] if train_test_diff else [train_valid]
+print_freq = 'preprocessed' if preprocessed else sfreq
 
 plots_path = f'plots/{print_train_test}_{sfreq}-{print_size}-batch{batch_size}_{n_epochs}epochs/'
 
@@ -61,20 +68,22 @@ except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
 if train_valid == 'MASS':
-    train_valid_dataset = MASS_SS3(subject_ids=train_valid_size, resample=sfreq)
+    train_valid_dataset = MASS_SS3(subject_ids=train_valid_size,
+                                   preprocessed=preprocessed)
 elif train_valid == 'SleepPhysionet':
-    train_valid_dataset = SleepPhysionet(subject_ids=train_valid_size, recording=[1], resample=sfreq)
+    train_valid_dataset = SleepPhysionet(subject_ids=train_valid_size,
+                                         recording=[1])
 elif train_valid == 'Clinical':
-    train_valid_dataset = ClinicalDataset(subject_ids=train_valid_size, resample=sfreq)
+    train_valid_dataset = ClinicalDataset(subject_ids=train_valid_size)
 
-if train_test_different:
+if train_test_diff:
     if test == 'MASS':
-        test_dataset = MASS_SS3(subject_ids=test_size, resample=sfreq)
+        test_dataset = MASS_SS3(subject_ids=test_size)
     elif test == 'SleepPhysionet':
-        test_dataset = SleepPhysionet(subject_ids=test_size, recording=[1], resample=sfreq)
+        test_dataset = SleepPhysionet(subject_ids=test_size, recording=[1])
     elif test == 'Clinical':
-        test_dataset = ClinicalDataset(subject_ids=test_size, resample=sfreq)
-    dataset = BaseConcatDataset([train_valid_ds, test_ds])
+        test_dataset = ClinicalDataset(subject_ids=test_size)
+    dataset = BaseConcatDataset([train_valid_dataset, test_dataset])
 else:
     dataset = train_valid_dataset
 
@@ -84,14 +93,14 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-high_cut_hz = 30
-preprocessors = [
-    # convert from volt to microvolt, directly modifying the numpy array
-    # NumpyPreproc(fn=lambda x: x * 1e6),
-    # bandpass filter
-    MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
-]
-preprocess(dataset, preprocessors)
+# high_cut_hz = 30
+# preprocessors = [
+#     # convert from volt to microvolt, directly modifying the numpy array
+#     NumpyPreproc(fn=lambda x: x * 1e6),
+#     # bandpass filter
+#     MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
+# ]
+# preprocess(dataset, preprocessors)
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq

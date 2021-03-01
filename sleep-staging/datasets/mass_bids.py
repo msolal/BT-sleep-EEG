@@ -4,7 +4,8 @@ from mne_bids import BIDSPath, read_raw_bids
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
 
-path_to_data = '/storage/store2/data/mass-bids/SS3/'
+bids_root = '/storage/store2/data/mass-bids/SS3/'
+preproc_bids_root = bids_root + 'derivatives/preprocessed/'
 channels = ['C3', 'C4', 'Cz', 'ECG I', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3',
             'EOG Left Horiz', 'EOG Right Horiz', 'F3', 'F4', 'F7', 'F8', 'Fp1',
             'Fp2', 'Fz', 'O1', 'O2', 'Oz', 'P3', 'P4', 'Pz', 'T3', 'T4', 'T5',
@@ -32,9 +33,12 @@ class MASS_SS3(BaseConcatDataset):
         dataset. Default of 30 mins.
     """
     def __init__(self, subject_ids=None, preload=True,
-                 load_eeg_only=True, crop_wake_mins=30, resample=False):
+                 load_eeg_only=True, crop_wake_mins=30, preprocessed=True):
 
-        all_sub = pd.read_csv(path_to_data + 'participants.tsv',
+        if preprocessed:
+            bids_root = preproc_bids_root
+        
+        all_sub = pd.read_csv(bids_root + 'participants.tsv',
                               delimiter='\t', skiprows=1,
                               names=['participant_id', 'age', 'sex', 'hand'],
                               engine='python')['participant_id'].transform(
@@ -51,30 +55,26 @@ class MASS_SS3(BaseConcatDataset):
         if load_eeg_only:
             datatype = 'eeg'
         bids_paths = [BIDSPath(subject=subject, datatype=datatype,
-                               root=path_to_data) for subject in subject_ids]
+                               root=bids_root) for subject in subject_ids]
 
         all_base_ds = list()
         for path in bids_paths:
             raw, desc = self._load_raw(path, preload=preload,
                                        load_eeg_only=load_eeg_only,
-                                       crop_wake_mins=crop_wake_mins,
-                                       resample=resample)
+                                       crop_wake_mins=crop_wake_mins)
             base_ds = BaseDataset(raw, desc)
             all_base_ds.append(base_ds)
         super().__init__(all_base_ds)
 
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
-                  crop_wake_mins=30, resample=False):
+                  crop_wake_mins=30):
 
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
         raw.pick_channels(channels)
         if load_eeg_only:
             raw.pick_types(eeg=True)
-
-        if type(resample) == int:
-            raw.resample(resample)
 
         if crop_wake_mins > 0:
             # Find first and last sleep stages
