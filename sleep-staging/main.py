@@ -36,14 +36,14 @@ mapping = {'Sleep stage W': 0,
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 
 train_test_different = False
-train_valid = 'MASS'
+train_valid = 'Clinical'
 train_valid_size = 60
 # test = 'MASS'
 # test_size = 0
 print_train_test = train_valid+'_'+test if train_test_different else train_valid
 print_size = f'{train_valid_size}_{test_size}' if train_test_different else str(train_valid_size)
 train_test = [train_valid, test] if train_test_different else [train_valid]
-sfreq = 100
+sfreq = 256
 window_size_s = 30
 lr = 5e-4
 n_epochs = 10
@@ -65,7 +65,7 @@ if train_valid == 'MASS':
 elif train_valid == 'SleepPhysionet':
     train_valid_dataset = SleepPhysionet(subject_ids=train_valid_size, recording=[1], resample=sfreq)
 elif train_valid == 'Clinical':
-    train_valid_dataset = ClinicalDataset(subject_ids=train_valid_size, recording=[1], resample=sfreq)
+    train_valid_dataset = ClinicalDataset(subject_ids=train_valid_size, resample=sfreq)
 
 if train_test_different:
     if test == 'MASS':
@@ -73,7 +73,7 @@ if train_test_different:
     elif test == 'SleepPhysionet':
         test_dataset = SleepPhysionet(subject_ids=test_size, recording=[1], resample=sfreq)
     elif test == 'Clinical':
-        test_dataset = ClinicalDataset(subject_ids=test_size, recording=[1], resample=sfreq)
+        test_dataset = ClinicalDataset(subject_ids=test_size, resample=sfreq)
     dataset = BaseConcatDataset([train_valid_ds, test_ds])
 else:
     dataset = train_valid_dataset
@@ -87,7 +87,7 @@ print(dataset.description)
 high_cut_hz = 30
 preprocessors = [
     # convert from volt to microvolt, directly modifying the numpy array
-    NumpyPreproc(fn=lambda x: x * 1e6),
+    # NumpyPreproc(fn=lambda x: x * 1e6),
     # bandpass filter
     MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
 ]

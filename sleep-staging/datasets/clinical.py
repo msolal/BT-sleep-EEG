@@ -8,8 +8,8 @@ path_to_data = '/media/pallanca/datapartition/maelys/data/BIDS/'
 
 
 class ClinicalDataset(BaseConcatDataset):
-    """MASS SS3 dataset.
-    Contains overnight recordings from 62 healthy subjects.
+    """Clinical dataset.
+    Contains overnight recordings from around 200 subjects.
 
     Parameters
     ----------
@@ -61,9 +61,11 @@ class ClinicalDataset(BaseConcatDataset):
 
     @staticmethod
     def _load_raw(bids_path, preload, load_eeg_only=True,
-                  crop_wake_mins=False, resample=False):
+                  crop_wake_mins=30, resample=False):
+
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
+
         if load_eeg_only:
             raw.pick_types(eeg=True)
 
@@ -80,12 +82,14 @@ class ClinicalDataset(BaseConcatDataset):
             # Crop raw
             tmin = annots[int(sleep_event_inds[0])]['onset'] - \
                 crop_wake_mins * 60
+            tmin = max(raw.times[0], tmin)
             tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
                 crop_wake_mins * 60
+            tmax = min(tmax, raw.times[-1])
             raw.crop(tmin=tmin, tmax=tmax)
 
         basename = bids_path.basename
         sub_nb = basename[4:]
-        desc = pd.Series({'subject': sub_nb, 'dataset': 'Clinical'}, name='')
+        desc = pd.Series({'subject': sub_nb, 'dataset': 'Clinical'}, name='MASS')
 
         return raw, desc
