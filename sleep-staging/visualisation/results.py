@@ -28,7 +28,7 @@ def plot_history(plots_path, clf):
         ax=ax2, style=['-', ':'], marker='o', color='tab:red', legend=False)
     ax2.tick_params(axis='y', labelcolor='tab:red', labelsize=12)
     ax2.set_ylabel('Balanced misclassification rate [%]', color='tab:red',
-                   fontsize=12)
+                   fontsize=10)
     ax2.set_ylim(ax2.get_ylim()[0], 85)  # make some room for legend
     ax1.set_xlabel('Epoch', fontsize=12)
 
