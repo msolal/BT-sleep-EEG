@@ -3,9 +3,6 @@ import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
-
-bids_root = '/storage/store2/data/mass-bids/SS3/'
-preproc_bids_root = bids_root + 'derivatives/preprocessed/'
 channels = ['C3', 'C4', 'Cz', 'ECG I', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3',
             'EOG Left Horiz', 'EOG Right Horiz', 'F3', 'F4', 'F7', 'F8', 'Fp1',
             'Fp2', 'Fz', 'O1', 'O2', 'Oz', 'P3', 'P4', 'Pz', 'T3', 'T4', 'T5',
@@ -34,9 +31,12 @@ class MASS_SS3(BaseConcatDataset):
     """
     def __init__(self, subject_ids=None, preload=True,
                  load_eeg_only=True, crop_wake_mins=30, preprocessed=True):
-
+        
+        bids_root = '/storage/store2/data/mass-bids/SS3/'
+        preproc_bids_root = 'derivatives/preprocessed/'
+        
         if preprocessed:
-            bids_root = preproc_bids_root
+            bids_root += preproc_bids_root
         
         all_sub = pd.read_csv(bids_root + 'participants.tsv',
                               delimiter='\t', skiprows=1,

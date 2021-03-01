@@ -38,12 +38,12 @@ mapping = {'Sleep stage W': 0,
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 
 train_test_diff = False
-preprocessed = True
+preprocessed = False
 train_valid = 'MASS'
 train_valid_size = 60
 test = 'MASS'
 test_size = 0
-sfreq = 100
+sfreq = 256
 window_size_s = 30
 lr = 5e-4
 n_epochs = 10
@@ -93,14 +93,14 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-# high_cut_hz = 30
-# preprocessors = [
-#     # convert from volt to microvolt, directly modifying the numpy array
-#     NumpyPreproc(fn=lambda x: x * 1e6),
-#     # bandpass filter
-#     MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
-# ]
-# preprocess(dataset, preprocessors)
+high_cut_hz = 30
+preprocessors = [
+    # convert from volt to microvolt, directly modifying the numpy array
+    NumpyPreproc(fn=lambda x: x * 1e6),
+    # bandpass filter
+    MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
+]
+preprocess(dataset, preprocessors)
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq
