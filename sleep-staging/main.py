@@ -38,12 +38,12 @@ mapping = {'Sleep stage W': 0,
 classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 
 train_test_diff = False
-preprocessed = False
-train_valid = 'MASS'
-train_valid_size = 60
+preprocessed = True
+train_valid = 'SleepPhysionet'
+train_valid_size = 180
 test = 'MASS'
 test_size = 0
-sfreq = 256
+sfreq = 100
 window_size_s = 30
 lr = 5e-4
 n_epochs = 10
