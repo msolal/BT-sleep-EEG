@@ -3,15 +3,10 @@ import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids
 from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
-channels = ['C3', 'C4', 'Cz', 'ECG I', 'EMG Chin1', 'EMG Chin2', 'EMG Chin3',
-            'EOG Left Horiz', 'EOG Right Horiz', 'F3', 'F4', 'F7', 'F8', 'Fp1',
-            'Fp2', 'Fz', 'O1', 'O2', 'Oz', 'P3', 'P4', 'Pz', 'T3', 'T4', 'T5',
-            'T6']
 
-
-class MASS_SS3(BaseConcatDataset):
-    """MASS SS3 dataset.
-    Contains overnight recordings from 62 healthy subjects.
+class SleepPhysionet(BaseConcatDataset):
+    """Sleep Physionet dataset.
+    Contains overnight recordings from 78 healthy subjects.
 
     Parameters
     ----------
@@ -32,7 +27,7 @@ class MASS_SS3(BaseConcatDataset):
     def __init__(self, subject_ids=None, preload=True,
                  load_eeg_only=True, crop_wake_mins=30, preprocessed=True):
         
-        bids_root = '/storage/store2/data/mass-bids/SS3/'
+        bids_root = '/storage/store2/data/SleepPhysionet-bids/'
         preproc_bids_root = 'derivatives/preprocessed/'
         
         if preprocessed:
@@ -72,7 +67,6 @@ class MASS_SS3(BaseConcatDataset):
 
         raw = read_raw_bids(bids_path=bids_path)
         annots = raw.annotations
-        raw.pick_channels(channels)
         if load_eeg_only:
             raw.pick_types(eeg=True)
 
@@ -94,6 +88,6 @@ class MASS_SS3(BaseConcatDataset):
 
         basename = bids_path.basename
         sub_nb = basename[4:]
-        desc = pd.Series({'subject': sub_nb, 'dataset': 'MASS'}, name='MASS')
+        desc = pd.Series({'subject': sub_nb, 'dataset': 'SleepPhysionet'}, name='SleepPhysionet')
 
         return raw, desc

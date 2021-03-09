@@ -1,18 +1,19 @@
 # %%
-# 0. Setting up the environment
+# 0a. Setting up the environment
 
-# import torch
 import numpy as np
 import os
 import torch
 
+from braindecode.datasets import BaseConcatDataset
 from datasets.mass_bids import MASS_SS3
-from datasets.sleep_physionet import SleepPhysionet
+from datasets.sleep_physionet_bids import SleepPhysionet
 from datasets.clinical import ClinicalDataset
 from datautil.preprocess import zscore
 from datautil.preprocess import MNEPreproc, NumpyPreproc, preprocess
 from datautil.windowers import create_windows_from_events
-from datautil.split import train_valid_test_split
+from datautil.split import split_by_events
+from visualisation.windows import view_nb_windows
 from util import set_random_seeds
 from models.sleep_stager_chambon import SleepStagerChambon2018
 from skorch.helper import predefined_split
@@ -21,15 +22,44 @@ from braindecode import EEGClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score
-from visualisation.visualisation import save_score, plot_confusion_matrix, plot_history, view_nb_windows, plot_classification_report
+from visualisation.results import (save_score, plot_confusion_matrix, 
+                                   plot_history, plot_classification_report)
 
 
 # %%
-# 1. Loading the data
+# 0b. Setting all the constants
 
-plots_path = 'plots/MASS_100-all-batch16_10epochs-shuffle_usual_split/'
-# plots_path = 'plots/MASS_SleepPhysionet-36_12_12/'
-# plots_path = 'plots/SleepPhysionet_MASS-36_12_12/'
+mapping = {'Sleep stage W': 0,
+           'Sleep stage 1': 1,
+           'Sleep stage 2': 2,
+           'Sleep stage 3': 3,
+           'Sleep stage 4': 3,
+           'Sleep stage R': 4}
+classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
+
+train_test_diff = False
+preprocessed = True
+train_valid = 'SleepPhysionet'
+train_valid_size = 180
+test = 'MASS'
+test_size = 0
+sfreq = 100
+window_size_s = 30
+lr = 5e-4
+n_epochs = 10
+batch_size = 8
+
+print_train_test = f'{train_valid}_{test}' if train_test_diff else train_valid
+print_size = (
+    f'{train_valid_size}_{test_size}' if train_test_diff
+    else str(train_valid_size))
+train_test = [train_valid, test] if train_test_diff else [train_valid]
+print_freq = 'preprocessed' if preprocessed else sfreq
+
+plots_path = f'plots/{print_train_test}_{print_freq}-{print_size}-batch{batch_size}_{n_epochs}epochs/'
+
+# %%
+# 1. Loading the data
 
 try:
     os.mkdir(plots_path)
@@ -37,88 +67,61 @@ try:
 except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
-dataset = MASS_SS3(subject_ids=None, crop_wake_mins=30, resample=100)
+if train_valid == 'MASS':
+    train_valid_dataset = MASS_SS3(subject_ids=train_valid_size,
+                                   preprocessed=preprocessed)
+elif train_valid == 'SleepPhysionet':
+    train_valid_dataset = SleepPhysionet(subject_ids=train_valid_size,
+                                         preprocessed=preprocessed)
+elif train_valid == 'Clinical':
+    train_valid_dataset = ClinicalDataset(subject_ids=train_valid_size)
 
-# train_valid_ds = MASS_SS3(subject_ids=48, crop_wake_mins=30)
-# test_ds = SleepPhysionet(subject_ids=12, recording_ids=[1], crop_wake_mins=30)
-# train_valid_ds = SleepPhysionet(subject_ids=48, recording_ids=[1], crop_wake_mins=30)
-# test_ds = MASS_SS3(subject_ids=12, crop_wake_mins=30)
-# dataset = [train_valid_ds, test_ds]
+if train_test_diff:
+    if test == 'MASS':
+        test_dataset = MASS_SS3(subject_ids=test_size)
+    elif test == 'SleepPhysionet':
+        test_dataset = SleepPhysionet(subject_ids=test_size,
+                                      preprocessed=preprocessed)
+    elif test == 'Clinical':
+        test_dataset = ClinicalDataset(subject_ids=test_size)
+    dataset = BaseConcatDataset([train_valid_dataset, test_dataset])
+else:
+    dataset = train_valid_dataset
+
+print(dataset.description)
+
 
 # %%
 # 2. Preprocessing
 
-high_cut_hz = 30
-
-preprocessors = [
-    # convert from volt to microvolt, directly modifying the numpy array
-    NumpyPreproc(fn=lambda x: x * 1e6),
-    # bandpass filter
-    MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
-]
-
-# Transform the data
-preprocess(dataset, preprocessors)
-# preprocess(dataset[0], preprocessors)
-# preprocess(dataset[1], preprocessors)
+# high_cut_hz = 30
+# preprocessors = [
+#     # convert from volt to microvolt, directly modifying the numpy array
+#     NumpyPreproc(fn=lambda x: x * 1e6),
+#     # bandpass filter
+#     MNEPreproc(fn='filter', l_freq=None, h_freq=high_cut_hz),
+# ]
+# preprocess(dataset, preprocessors)
 
 # Extracting windows
-
-mapping = {  # We merge stages 3 and 4 following AASM standards.
-    'Sleep stage W': 0,
-    'Sleep stage 1': 1,
-    'Sleep stage 2': 2,
-    'Sleep stage 3': 3,
-    'Sleep stage 4': 3,
-    'Sleep stage R': 4
-}
-
-window_size_s = 30
-sfreq = int(dataset.datasets[0].raw.info['sfreq'])
 window_size_samples = window_size_s * sfreq
-
 windows_dataset = create_windows_from_events(
     dataset, trial_start_offset_samples=0, trial_stop_offset_samples=0,
     window_size_samples=window_size_samples,
     window_stride_samples=window_size_samples, preload=True, mapping=mapping)
 
-# window_size_s = 30
-# sfreq = 100
-# window_size_samples = [window_size_s * sfreq, window_size_s * sfreq]
-
-# windows_dataset = [create_windows_from_events(
-#                    dataset[0], trial_start_offset_samples=0,
-#                    trial_stop_offset_samples=0,
-#                    window_size_samples=window_size_samples[0],
-#                    window_stride_samples=window_size_samples[0],
-#                    preload=True, mapping=mapping),
-#                   create_windows_from_events(dataset[1],
-#                    trial_start_offset_samples=0,
-#                    trial_stop_offset_samples=0,
-#                    window_size_samples=window_size_samples[1],
-#                    window_stride_samples=window_size_samples[1],
-#                    preload=True, mapping=mapping)]
-
-
 # Window preprocessing
 preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
-# preprocess(windows_dataset[0], [MNEPreproc(fn=zscore)])
-# preprocess(windows_dataset[1], [MNEPreproc(fn=zscore)])
-
 
 # %%
 # 3. Making train, valid and test splits
-train_set, valid_set, test_set = train_valid_test_split(windows_dataset, shuffle=True)
-# train_set, valid_set, _ = train_valid_test_split(windows_dataset[0], shuffle=True, 0.75, 0.25, 0)
-# _, _, test_set = train_valid_test_split(windows_dataset[1], shuffle=True, 0, 0, 1)
 
-print(view_nb_windows(plots_path, 
-                      train_set.datasets[0].windows,
-                      valid_set.datasets[0].windows,
-                      test_set.datasets[0].windows))
+train_set, valid_set, test_set = split_by_events(windows_dataset, train_test)
+print(view_nb_windows(plots_path, train_set, valid_set, test_set))
 
 # %%
 # 4. Creating the model
+
 cuda = torch.cuda.is_available()
 set_random_seeds(seed=87, cuda=cuda)
 device = 'cuda' if cuda else 'cpu'
@@ -143,10 +146,6 @@ model = model.to(device)
 
 # %%
 # 5. Training
-
-lr = 5e-4
-n_epochs = 10
-batch_size = 16
 
 train_bal_acc = EpochScoring(
     scoring='balanced_accuracy', on_train=True, name='train_bal_acc',
@@ -186,7 +185,6 @@ save_score(plots_path, test_bal_acc, test_kappa)
 plot_history(plots_path, clf)
 
 # Finally, we also display the confusion matrix and classification report
-classes_mapping = {0: 'W', 1: 'N1', 2: 'N2', 3: 'N3', 4: 'R'}
 conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
 plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
 print(conf_mat)

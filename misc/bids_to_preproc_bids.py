@@ -4,8 +4,13 @@ from os.path import basename
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids 
 from tempfile import NamedTemporaryFile
 
+<<<<<<< HEAD
 bids_root = '/storage/store2/data/mass-bids/SS3/'
 preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
+=======
+bids_root = '/storage/store2/data/SleepPhysionet-bids/'
+preproc_bids_root = bids_root + 'derivatives/preprocessed/'
+>>>>>>> f79dcda05819af89709b4fd4a38be556780e872d
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -20,7 +25,11 @@ def preprocess_and_save(bids_path, l_freq, h_freq, sfreq):
     raw = read_raw_bids(bids_path=bids_path)
     # Preprocessing
     raw.load_data()
+<<<<<<< HEAD
     raw.resample(sfreq=sfreq, npad='auto')
+=======
+    # raw.resample(sfreq=sfreq, npad='auto')
+>>>>>>> f79dcda05819af89709b4fd4a38be556780e872d
     raw.filter(l_freq=l_freq, h_freq=h_freq)
 
     # Write new BIDS
