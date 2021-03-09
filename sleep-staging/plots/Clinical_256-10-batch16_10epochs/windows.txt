@@ -1,0 +1,24 @@
+Number of windows in each set:
+
+Training set: 5417 events: 
+Sleep stage 1: 150
+Sleep stage 2: 2371
+Sleep stage 3: 1022
+Sleep stage 4: 1022
+Sleep stage R: 712
+Sleep stage W: 1162
+
+Validation set: 2529 events: 
+Sleep stage 1: 44
+Sleep stage 2: 862
+Sleep stage 3: 238
+Sleep stage R: 209
+Sleep stage W: 1176
+
+Test set: 2629 events: 
+Sleep stage 1: 24
+Sleep stage 2: 612
+Sleep stage 3: 483
+Sleep stage 4: 483
+Sleep stage R: 248
+Sleep stage W: 1262
