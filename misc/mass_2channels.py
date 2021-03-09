@@ -1,16 +1,12 @@
 import mne
+import numpy as np
 import pandas as pd
 from os.path import basename
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids 
 from tempfile import NamedTemporaryFile
 
-<<<<<<< HEAD
-bids_root = '/storage/store2/data/mass-bids/SS3/'
-preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
-=======
-bids_root = '/storage/store2/data/SleepPhysionet-bids/'
-preproc_bids_root = bids_root + 'derivatives/preprocessed/'
->>>>>>> f79dcda05819af89709b4fd4a38be556780e872d
+bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
+preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/2channels/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -21,16 +17,26 @@ all_sub = pd.read_csv(bids_root + 'participants.tsv',
 bids_paths = [BIDSPath(subject=subject, root=bids_root,
                        datatype=datatype) for subject in all_sub]
 
-def preprocess_and_save(bids_path, l_freq, h_freq, sfreq):
+def preprocess_and_save(bids_path):
     raw = read_raw_bids(bids_path=bids_path)
-    # Preprocessing
-    raw.load_data()
-<<<<<<< HEAD
-    raw.resample(sfreq=sfreq, npad='auto')
-=======
-    # raw.resample(sfreq=sfreq, npad='auto')
->>>>>>> f79dcda05819af89709b4fd4a38be556780e872d
-    raw.filter(l_freq=l_freq, h_freq=h_freq)
+    raw.pick_channels(['Fp1', 'Fp2', 'Cz', 'Pz', 'Oz'], ordered=True)
+    sfreq = raw.info['sfreq']
+    linefreq = raw.info['line_freq']
+
+    data, times = raw[:]
+    fpzcz = (data[0] + data[1])/2 - data[2]
+    info_fpzcz = mne.create_info(['Fpz-Cz'], sfreq=sfreq, ch_types=datatype)
+    info_fpzcz['line_freq'] = linefreq
+    raw_fpzcz = mne.io.RawArray(fpzcz[np.newaxis, :], info_fpzcz)
+    
+    pzoz = data[3] - data[4]
+    info_pzoz = mne.create_info(['Pz-Oz'], sfreq=sfreq, ch_types=datatype)
+    info_pzoz['line_freq'] = linefreq
+    raw_pzoz = mne.io.RawArray(pzoz[np.newaxis, :], info_pzoz)
+
+    raw_final = raw_fpzcz.copy().add_channels([raw_pzoz])
+    raw_final.info['meas_date'] = raw.info['meas_date']
+    raw_final.set_annotations(raw.annotations)
 
     # Write new BIDS
 
@@ -44,11 +50,10 @@ def preprocess_and_save(bids_path, l_freq, h_freq, sfreq):
     # Use `_raw.fif` suffix to avoid MNE warnings.
     with NamedTemporaryFile(suffix='_raw.fif') as f:
         fname = f.name
-        raw.save(fname, overwrite=True)
+        raw_final.save(fname, overwrite=True)
         raw = mne.io.read_raw_fif(fname, preload=False)
         write_raw_bids(raw, preproc_bids_path, overwrite=True)
 
-l_freq, h_freq = None, 30
-sfreq = 100
+
 for bids_path in bids_paths:
-    preprocess_and_save(bids_path, l_freq, h_freq, sfreq)
+    preprocess_and_save(bids_path)
