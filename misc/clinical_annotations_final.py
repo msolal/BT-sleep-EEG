@@ -22,12 +22,15 @@ map_labels = np.vectorize(
     lambda x: event_label[x] if x in event_label else 'misc')
 
 
-annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
+# annot_path = '/media/pallanca/datapartition/maelys/data/csv_hypno/'
+annot_path = '/maelys/Documents/misc-bt/clinical_annot/'
+
 files = glob.glob(annot_path+'*.csv')
 filerefs = [os.path.basename(file).strip('annot.csv') for file in files]
-clean_annot_path = (
-    '/media/pallanca/datapartition/maelys/data/clean_annotations/')
-
+# clean_annot_path = (
+#     '/media/pallanca/datapartition/maelys/data/clean_annotations/')
+# clean_annot_path = (
+#     '/media/pallanca/datapartition/maelys/data/clean_annotations/')
 
 def csv_to_df(filepath, fileref):
     """ Get csv file as pandas dataframe
