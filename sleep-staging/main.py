@@ -35,16 +35,16 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
-datasets = ['SleepPhysionet', 'MASS_SS3']
-derivatives = ['preprocessed', '2channels']
-# datasets = ['MASS_SS3', 'SleepPhysionet']
-# derivatives = ['2channels', 'preprocessed']
-sizes = [48, 12]
+# datasets = ['Clinical', 'MASS_SS3']
+# derivatives = ['6channels', '6channels']
+# # datasets = ['MASS_SS3', 'SleepPhysionet']
+# # derivatives = ['2channels', 'preprocessed']
+# sizes = [48, 12]
 # datasets = ['MASS_SS3']
 # derivatives = ['2channels']
-# datasets = ['SleepPhysionet']
-# derivatives = ['preprocessed']
-# sizes = [60]
+datasets = ['Clinical']
+derivatives = ['preprocessed']
+sizes = [60]
 train_test_diff = True if len(datasets) > 1 else False
 
 sfreq = 100
@@ -58,7 +58,7 @@ print_datasets = (f'{datasets[0]}_{datasets[1]}'
 print_sizes = (f'{sizes[0]}_{sizes[1]}' if train_test_diff
                else str(sizes[0]))
 
-plots_path = f'plots/clean_V/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+plots_path = f'plots/clean_microV/{print_datasets}_preproc-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 
 # %%
 # 1. Loading the data
@@ -78,7 +78,7 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-# preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
+preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq
