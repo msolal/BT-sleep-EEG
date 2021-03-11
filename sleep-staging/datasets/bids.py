@@ -29,9 +29,10 @@ class BIDS(BaseConcatDataset):
         and after the last sleep event. Used to reduce the imbalance in this
         dataset. Default of 30 mins.
     """
-    def __init__(self, dataset, derivatives=None, subject_ids=None, preload=True,
-                 load_eeg_only=True, crop_wake_mins=30):
-        
+    def __init__(self, dataset, derivatives=None, subject_ids=None,
+                 preload=True, load_eeg_only=True, crop_wake_mins=30,
+                 verbose=False):
+
         if dataset == 'MASS_SS3':
             bids_root = '/storage/store2/data/mass-bids/SS3/'
         elif dataset == 'SleepPhysionet':
@@ -40,7 +41,7 @@ class BIDS(BaseConcatDataset):
             bids_root = '/media/pallanca/datapartition/maelys/data/BIDS/'
         if derivatives is not None:
             bids_root += 'derivatives/'+derivatives+'/'
-        
+
         all_sub = pd.read_csv(bids_root + 'participants.tsv',
                               delimiter='\t', skiprows=1,
                               names=['participant_id', 'age', 'sex', 'hand'],
@@ -64,16 +65,17 @@ class BIDS(BaseConcatDataset):
         for path in bids_paths:
             raw, desc = self._load_raw(path, dataset=dataset, preload=preload,
                                        load_eeg_only=load_eeg_only,
-                                       crop_wake_mins=crop_wake_mins)
+                                       crop_wake_mins=crop_wake_mins,
+                                       verbose=verbose)
             base_ds = BaseDataset(raw, desc)
             all_base_ds.append(base_ds)
         super().__init__(all_base_ds)
 
     @staticmethod
     def _load_raw(bids_path, dataset, preload=True, load_eeg_only=True,
-                  crop_wake_mins=30):
+                  crop_wake_mins=30, verbose=False):
 
-        raw = read_raw_bids(bids_path=bids_path)
+        raw = read_raw_bids(bids_path=bids_path, verbose=False)
         annots = raw.annotations
         if load_eeg_only:
             raw.pick_types(eeg=True)
