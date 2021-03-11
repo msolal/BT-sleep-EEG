@@ -5,7 +5,7 @@ from mne_bids import BIDSPath, read_raw_bids, write_raw_bids
 from tempfile import NamedTemporaryFile
 
 bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
-preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/2channels/'
+preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/4channels/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -19,7 +19,9 @@ bids_paths = [BIDSPath(subject=subject, root=bids_root,
 
 def preprocess_and_save(bids_path):
     raw = read_raw_bids(bids_path=bids_path)
-    raw.pick_channels(['Fp1', 'Fp2', 'Cz', 'Pz', 'Oz'], ordered=True)
+    raw.pick_channels(['Fp1', 'Fp2', 'Cz', 'Pz', 'Oz',
+                       'EOG Right Horiz', 'EOG Left Horiz',
+                       'EMG Chin1'], ordered=True)
     sfreq = raw.info['sfreq']
     linefreq = raw.info['line_freq']
 
@@ -34,7 +36,17 @@ def preprocess_and_save(bids_path):
     info_pzoz['line_freq'] = linefreq
     raw_pzoz = mne.io.RawArray(pzoz[np.newaxis, :], info_pzoz)
 
-    raw_final = raw_fpzcz.copy().add_channels([raw_pzoz])
+    eog = (data[5] + data[6])/2
+    info_eog = mne.create_info(['EOG Horiz avg'], sfreq=sfreq, ch_types='eog')
+    info_eog['line_freq'] = linefreq
+    raw_eog = mne.io.RawArray(eog[np.newaxis, :], info_eog)
+
+    emg = data[7]
+    info_emg = mne.create_info(['EMG Chin1'], sfreq=sfreq, ch_types='emg')
+    info_emg['line_freq'] = linefreq
+    raw_emg = mne.io.RawArray(emg[np.newaxis, :], info_emg)
+
+    raw_final = raw_fpzcz.copy().add_channels([raw_pzoz, raw_eog, raw_emg])
     raw_final.info['meas_date'] = raw.info['meas_date']
     raw_final.set_annotations(raw.annotations)
 
