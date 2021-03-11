@@ -4,8 +4,8 @@ from os.path import basename
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids 
 from tempfile import NamedTemporaryFile
 
-bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
-preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/6channels/'
+bids_root = '/media/pallanca/datapartition/maelys/data/BIDS/derivatives/preprocessed/'
+preproc_bids_root = '/media/pallanca/datapartition/maelys/data/BIDS/derivatives/6channels/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
