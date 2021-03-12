@@ -35,15 +35,15 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
-# datasets = ['Clinical', 'MASS_SS3']
-# derivatives = ['6channels', '6channels']
-# # datasets = ['MASS_SS3', 'SleepPhysionet']
-# # derivatives = ['2channels', 'preprocessed']
+# datasets = ['SleepPhysionet', 'MASS_SS3']
+# derivatives = ['4channels', '4channels']
+# datasets = ['MASS_SS3', 'SleepPhysionet']
+# derivatives = ['4channels', '4channels']
 # sizes = [48, 12]
 # datasets = ['MASS_SS3']
-# derivatives = ['2channels']
-datasets = ['Clinical']
-derivatives = ['preprocessed']
+# derivatives = ['4channels']
+datasets = ['SleepPhysionet']
+derivatives = ['4channels']
 sizes = [60]
 train_test_diff = True if len(datasets) > 1 else False
 
@@ -58,7 +58,7 @@ print_datasets = (f'{datasets[0]}_{datasets[1]}'
 print_sizes = (f'{sizes[0]}_{sizes[1]}' if train_test_diff
                else str(sizes[0]))
 
-plots_path = f'plots/clean_microV/{print_datasets}_preproc-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+plots_path = f'plots/clean_4channels/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 
 # %%
 # 1. Loading the data
