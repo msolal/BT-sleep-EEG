@@ -47,7 +47,15 @@ def train_valid_test_split(windows_dataset, shuffle=True, train=0.6, valid=0.2, 
 
 
 def split_by_events(windows_dataset, train_test=None):
-    if len(train_test) != 1:
+    if train_test is None: 
+        n_events_per_subject = [len(ds.windows.events) for ds in windows_dataset.datasets]
+        index_subjects = list(np.argsort(n_events_per_subject))
+        folds = [index_subjects[i::5] for i in range(4)]
+        splitted = windows_dataset.split(by=folds)
+        train_set = BaseConcatDataset([splitted['0'], splitted['1'], splitted['2']])
+        valid_set = BaseConcatDataset([splitted['3']])
+        test_set = None
+    elif len(train_test) != 1:
         splitted_ds = windows_dataset.split(by='dataset')
         train_valid = splitted_ds[train_test[0]]
         n_events_per_subject = [len(ds.windows.events) for ds in train_valid.datasets]

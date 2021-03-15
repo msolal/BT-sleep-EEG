@@ -12,9 +12,12 @@ def view_nb_windows(plots_path, train_set, valid_set, test_set):
 
 
 def view_nb_windows_aux(myset):
-    event_id = myset.datasets[0].windows.event_id
-    train_set_windows = sum(np.bincount(dataset.windows.events[:, -1], minlength=6) for dataset in myset.datasets)
-    train_set_stats = f'{sum(train_set_windows)} events: \n'
-    for event_name in event_id.keys():
-        train_set_stats += f'{event_name}: {train_set_windows[event_id[event_name]]}\n'
-    return train_set_stats
+    if myset is not None:
+        event_id = myset.datasets[0].windows.event_id
+        train_set_windows = sum(np.bincount(dataset.windows.events[:, -1], minlength=6) for dataset in myset.datasets)
+        train_set_stats = f'{sum(train_set_windows)} events: \n'
+        for event_name in event_id.keys():
+            train_set_stats += f'{event_name}: {train_set_windows[event_id[event_name]]}\n'
+        return train_set_stats
+    else: 
+        return 'None'

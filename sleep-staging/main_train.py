@@ -17,10 +17,10 @@ from braindecode.models.sleep_stager_chambon_2018 import SleepStagerChambon2018
 from skorch.helper import predefined_split
 from skorch.callbacks import EpochScoring
 from braindecode import EEGClassifier
-from sklearn.metrics import (confusion_matrix, classification_report,
-                             balanced_accuracy_score, cohen_kappa_score)
-from visualisation.results import (save_score, plot_confusion_matrix,
-                                   plot_history, plot_classification_report)
+# from sklearn.metrics import (confusion_matrix, classification_report,
+#                              balanced_accuracy_score, cohen_kappa_score)
+# from visualisation.results import (save_score, plot_confusion_matrix,
+#                                    plot_history, plot_classification_report)
 
 
 # %%
@@ -35,15 +35,9 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
-# datasets = ['Clinical', 'MASS_SS3']
-# derivatives = ['6channels', '6channels']
-# # datasets = ['MASS_SS3', 'SleepPhysionet']
-# sizes = [48, 12]
-# datasets = ['MASS_SS3']
-datasets = ['Clinical']
+datasets = ['MASS_SS3']
 derivatives = ['6channels']
-sizes = [60]
-train_test_diff = True if len(datasets) > 1 else False
+sizes = [48]
 
 sfreq = 100
 window_size_s = 30
@@ -51,12 +45,9 @@ lr = 5e-4           # lr can be 5e-4 or 1e-3
 n_epochs = 10
 batch_size = 8
 
-print_datasets = (f'{datasets[0]}_{datasets[1]}'
-                  if train_test_diff else datasets[0])
-print_sizes = (f'{sizes[0]}_{sizes[1]}' if train_test_diff
-               else str(sizes[0]))
-
-plots_path = f'plots/clean_6channels/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
+plots_path = f'plots/{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+models_path = '/storage/store2/work/msolal/trained_models/' + desc
 
 # %%
 # 1. Loading the data
@@ -90,8 +81,8 @@ preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
 # %%
 # 3. Making train, valid and test splits
 
-train_set, valid_set, test_set = split_by_events(windows_dataset, datasets)
-print(view_nb_windows(plots_path, train_set, valid_set, test_set))
+train_set, valid_set, _ = split_by_events(windows_dataset, None)
+print(view_nb_windows(plots_path, train_set, valid_set, None))
 
 # %%
 # 4. Creating the model
@@ -119,7 +110,7 @@ print(f'Using device \'{device}\'.')
 model = model.to(device)
 
 # %%
-# 5. Training and testing
+# 5. Training
 
 train_bal_acc = EpochScoring(
     scoring='balanced_accuracy', on_train=True, name='train_bal_acc',
@@ -144,25 +135,27 @@ clf = EEGClassifier(
 # Model training for a specified number of epochs. `y` is None as it is already
 # supplied in the dataset.
 clf.fit(train_set, y=None, epochs=n_epochs)
+torch.save(clf, models_path)
+print(f'Model saved to {models_path}')
 
-y_true = np.concatenate(
-    tuple([test_set.datasets[i].windows.metadata['target'].values
-           for i in range(len(test_set.datasets))]))
-y_pred = clf.predict(test_set)
+# y_true = np.concatenate(
+#     tuple([test_set.datasets[i].windows.metadata['target'].values
+#            for i in range(len(test_set.datasets))]))
+# y_pred = clf.predict(test_set)
 
-# %%
-# 6. Visualising results
-test_bal_acc = balanced_accuracy_score(y_true, y_pred)
-test_kappa = cohen_kappa_score(y_true, y_pred)
-save_score(plots_path, test_bal_acc, test_kappa)
+# # %%
+# # 6. Visualising results
+# test_bal_acc = balanced_accuracy_score(y_true, y_pred)
+# test_kappa = cohen_kappa_score(y_true, y_pred)
+# save_score(plots_path, test_bal_acc, test_kappa)
 
-plot_history(plots_path, clf)
+# plot_history(plots_path, clf)
 
-# Finally, we also display the confusion matrix and classification report
-conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
-plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
-print(conf_mat)
+# # Finally, we also display the confusion matrix and classification report
+# conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
+# plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
+# print(conf_mat)
 
-class_report = classification_report(y_true, y_pred)
-plot_classification_report(plots_path, class_report, classes_mapping)
-print(class_report)
+# class_report = classification_report(y_true, y_pred)
+# plot_classification_report(plots_path, class_report, classes_mapping)
+# print(class_report)
