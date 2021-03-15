@@ -45,7 +45,7 @@ lr = 5e-4           # lr can be 5e-4 or 1e-3
 n_epochs = 10
 batch_size = 8
 
-desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
 plots_path = f'plots/{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 models_path = '/storage/store2/work/msolal/pretrained_models/' + desc
 
