@@ -44,7 +44,7 @@ print_datasets = f'{datasets[0]}_{datasets[1]}'
 print_sizes = f'{sizes[0]}_{sizes[1]}'
 
 plots_path = f'plots/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
-train_desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+train_desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
 models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
 
 # %%
