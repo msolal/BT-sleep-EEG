@@ -30,9 +30,9 @@ classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
 # datasets = ['Clinical', 'MASS_SS3']
 # derivatives = ['6channels', '6channels']
-# # datasets = ['MASS_SS3', 'SleepPhysionet']
-# # derivatives = ['2channels', 'preprocessed']
-# sizes = [48, 12]
+datasets = ['MASS_SS3', 'Clinical']
+derivatives = ['6channels', '6channels']
+sizes = [48, 12]
 
 sfreq = 100
 window_size_s = 30
@@ -45,7 +45,8 @@ print_sizes = f'{sizes[0]}_{sizes[1]}'
 
 plots_path = f'plots/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 train_desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
-models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
+# models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
+models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
 
 # %%
 # 1. Loading the data
@@ -58,7 +59,7 @@ except FileExistsError:
 
 dataset = BIDS(dataset=datasets[1],
                derivatives=derivatives[1],
-               subject_ids=sizes[1]))
+               subject_ids=sizes[1])
 print(dataset.description)
 
 # %%
