@@ -47,7 +47,7 @@ batch_size = 8
 
 desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 plots_path = f'plots/{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
-models_path = '/storage/store2/work/msolal/trained_models/' + desc
+models_path = '/storage/store2/work/msolal/pretrained_models/' + desc
 
 # %%
 # 1. Loading the data
@@ -135,8 +135,8 @@ clf = EEGClassifier(
 # Model training for a specified number of epochs. `y` is None as it is already
 # supplied in the dataset.
 clf.fit(train_set, y=None, epochs=n_epochs)
-torch.save(clf, save_path)
-print(f'Model saved to {save_path}')
+torch.save(clf, models_path)
+print(f'Model saved to {models_path}')
 
 # y_true = np.concatenate(
 #     tuple([test_set.datasets[i].windows.metadata['target'].values
