@@ -17,10 +17,6 @@ from braindecode.models.sleep_stager_chambon_2018 import SleepStagerChambon2018
 from skorch.helper import predefined_split
 from skorch.callbacks import EpochScoring
 from braindecode import EEGClassifier
-# from sklearn.metrics import (confusion_matrix, classification_report,
-#                              balanced_accuracy_score, cohen_kappa_score)
-# from visualisation.results import (save_score, plot_confusion_matrix,
-#                                    plot_history, plot_classification_report)
 
 
 # %%
@@ -137,25 +133,3 @@ clf = EEGClassifier(
 clf.fit(train_set, y=None, epochs=n_epochs)
 torch.save(clf, models_path)
 print(f'Model saved to {models_path}')
-
-# y_true = np.concatenate(
-#     tuple([test_set.datasets[i].windows.metadata['target'].values
-#            for i in range(len(test_set.datasets))]))
-# y_pred = clf.predict(test_set)
-
-# # %%
-# # 6. Visualising results
-# test_bal_acc = balanced_accuracy_score(y_true, y_pred)
-# test_kappa = cohen_kappa_score(y_true, y_pred)
-# save_score(plots_path, test_bal_acc, test_kappa)
-
-# plot_history(plots_path, clf)
-
-# # Finally, we also display the confusion matrix and classification report
-# conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
-# plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
-# print(conf_mat)
-
-# class_report = classification_report(y_true, y_pred)
-# plot_classification_report(plots_path, class_report, classes_mapping)
-# print(class_report)

@@ -20,4 +20,4 @@ def view_nb_windows_aux(myset):
             train_set_stats += f'{event_name}: {train_set_windows[event_id[event_name]]}\n'
         return train_set_stats
     else: 
-        return 'None'
+        return 'None\n'
