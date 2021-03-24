@@ -1,7 +1,9 @@
 Number of windows in each set:
 
 Training set: None
+
 Validation set: None
+
 Test set: 12376 events: 
 Sleep stage 1: 238
 Sleep stage 2: 4629

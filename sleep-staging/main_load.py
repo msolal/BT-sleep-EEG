@@ -30,7 +30,7 @@ classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
 # datasets = ['Clinical', 'MASS_SS3']
 # derivatives = ['6channels', '6channels']
-datasets = ['Clinical', 'MASS_SS3']
+datasets = ['MASS_SS3', 'Clinical']
 derivatives = ['6channels', '6channels']
 sizes = [48, 12]
 
@@ -45,8 +45,8 @@ print_sizes = f'{sizes[0]}_{sizes[1]}'
 
 plots_path = f'plots/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 train_desc = f'{datasets[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
-models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
-# models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
+# models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
+models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
 
 # %%
 # 1. Loading the data
@@ -85,7 +85,8 @@ print(view_nb_windows(plots_path, None, None, test_set))
 # %%
 # 4. Loading the model
 
-clf = torch.load(models_path)
+device = 'gpu' if torch.cuda.is_available() else 'cpu'
+clf = torch.load(models_path, map_location=torch.device(device))
 
 # %%
 # 5. Testing
