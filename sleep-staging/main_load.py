@@ -30,7 +30,7 @@ classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
 # datasets = ['Clinical', 'MASS_SS3']
 # derivatives = ['6channels', '6channels']
-datasets = ['MASS_SS3', 'MASS_SS3']
+datasets = ['SleepPhysionet', 'MASS_SS3']
 derivatives = ['4channels', '4channels']
 sizes = [48, 12]
 
@@ -40,7 +40,7 @@ lr = 5e-4           # lr can be 5e-4 or 1e-3
 n_epochs = 10
 batch_size = 8
 
-print_datasets = f'{datasets[0]}_{datasets[1]}'
+print_datasets = f'{datasets[0]}_{datasets[1]}_{derivatives[0]}'
 print_sizes = f'{sizes[0]}_{sizes[1]}'
 
 plots_path = f'plots/recent/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
