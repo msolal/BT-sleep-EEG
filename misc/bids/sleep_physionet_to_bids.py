@@ -5,8 +5,7 @@ from mne_bids import write_raw_bids, BIDSPath
 from mne.datasets.sleep_physionet.age import fetch_data
 
 # %%
-all_sub = (list(range(13))+list(range(14, 36))+[37, 38]+list(range(40, 52))
-           +list(range(53, 68))+list(range(69, 78))+list(range(80, 82)))
+all_sub = list(range(82))
 recording = [1, 2]
 
 paths = fetch_data(all_sub, recording=recording, on_missing='warn')

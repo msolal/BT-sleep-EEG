@@ -28,10 +28,10 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage 3/4': 3,
            'Sleep stage 4': 3,
            'Sleep stage R': 4}
-classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
+classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'R'}
 
-datasets = ['MASS_SS3']
-derivatives = ['6channels']
+datasets = ['SP']
+derivatives = ['4ch']
 sizes = [48]
 
 sfreq = 100
@@ -41,7 +41,7 @@ n_epochs = 10
 batch_size = 8
 
 desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
-plots_path = f'plots/{desc}/'
+plots_path = f'plots/29-03/{desc}/'
 models_path = f'/storage/store2/work/msolal/trained_models/{desc}'
 
 # %%
@@ -62,7 +62,7 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
+# preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq

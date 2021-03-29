@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids
@@ -6,11 +7,10 @@ from braindecode.datasets.base import BaseDataset, BaseConcatDataset
 
 class BIDS(BaseConcatDataset):
     """
-
     Parameters
     ----------
     dataset: str
-        either 'MASS_SS3' or 'SleepPhysionet' or 'Clinical'
+        either 'MASS' or 'SP' or 'Clinical'
     derivatives: str
         select derivatives dataset
         either None or 'preprocessed' or '2channels' or '6channels'
@@ -29,19 +29,20 @@ class BIDS(BaseConcatDataset):
         and after the last sleep event. Used to reduce the imbalance in this
         dataset. Default of 30 mins.
     """
-    def __init__(self, dataset, derivatives=None, subject_ids=None,
-                 preload=True, load_eeg_only=True, crop_wake_mins=30,
-                 verbose=False):
+    def __init__(self, dataset, derivatives, subject_ids=None,
+                 preload=True, load_eeg_only=False, crop_wake_mins=30):
 
-        if dataset == 'MASS_SS3':
-            bids_root = '/storage/store2/data/mass-bids/SS3/'
-        elif dataset == 'SleepPhysionet':
-            bids_root = '/storage/store2/data/SleepPhysionet-bids/'
-        elif dataset == 'Clinical':
-            bids_root = '/media/pallanca/datapartition/maelys/data/BIDS/'
-        if derivatives is not None:
-            bids_root += 'derivatives/'+derivatives+'/'
+        dataset_mapping = {'MASS': '/storage/store2/derivatives/MASS/SS3/',
+                           'SP': '/storage/store2/derivatives/Physionet/',
+                           'Clinical': '/media/pallanca/datapartition/maelys/data/BIDS/derivatives/'}
+        ds = dataset_mapping[dataset]
 
+        derivatives_mapping = {'4ch': '4channels-eeg_eog_emg',
+                               'preproc': 'preprocessed',
+                               '9ch': '9channels-eeg_eog_emg'}
+        deriv = derivatives_mapping[derivatives]
+
+        bids_root = f'{ds}{deriv}/'
         all_sub = pd.read_csv(bids_root + 'participants.tsv',
                               delimiter='\t', skiprows=1,
                               names=['participant_id', 'age', 'sex', 'hand'],
@@ -50,54 +51,58 @@ class BIDS(BaseConcatDataset):
 
         if subject_ids is None:
             subject_ids = all_sub
+        elif subject_ids == 48:
+            subject_ids = all_sub[:48]
+        elif subject_ids == 12:
+            subject_ids = all_sub[48:60]
         elif type(subject_ids) == int:
             subject_ids = all_sub[:subject_ids]
         elif len(set(subject_ids).intersection(all_sub)) != len(subject_ids):
             subject_ids = [x for x in subject_ids if x in all_sub]
             print('Warning: selected subjects which don\'t exist')
 
-        if load_eeg_only:
-            datatype = 'eeg'
-        bids_paths = [BIDSPath(subject=subject, datatype=datatype,
+        bids_paths = [BIDSPath(subject=subject, datatype='eeg',
                                root=bids_root) for subject in subject_ids]
 
         all_base_ds = list()
         for path in bids_paths:
             raw, desc = self._load_raw(path, dataset=dataset, preload=preload,
                                        load_eeg_only=load_eeg_only,
-                                       crop_wake_mins=crop_wake_mins,
-                                       verbose=verbose)
+                                       crop_wake_mins=crop_wake_mins)
             base_ds = BaseDataset(raw, desc)
             all_base_ds.append(base_ds)
         super().__init__(all_base_ds)
 
     @staticmethod
-    def _load_raw(bids_path, dataset, preload=True, load_eeg_only=True,
-                  crop_wake_mins=30, verbose=False):
+    def _load_raw(bids_path, dataset, preload=True, load_eeg_only=False,
+                  crop_wake_mins=30):
+
+        if dataset == 'SP':
+            session = sorted(os.listdir(f'{bids_path.root}/sub-{bids_path.subject}'))[0][4:]
+            bids_path.update(session=session)
 
         raw = read_raw_bids(bids_path=bids_path, verbose=False)
-        annots = raw.annotations
         if load_eeg_only:
             raw.pick_types(eeg=True)
 
-        if crop_wake_mins > 0:
-            # Find first and last sleep stages
-            mask = [
-                x[-1] in ['1', '2', '3', '4', 'R']
-                for x in annots.description]
-            sleep_event_inds = np.where(mask)[0]
+        # if crop_wake_mins > 0:
+        #     # Find first and last sleep stages
+        #     mask = [
+        #         x[-1] in ['1', '2', '3', '4', 'R']
+        #         for x in annots.description]
+        #     sleep_event_inds = np.where(mask)[0]
+        #     # Crop raw
+        #     tmin = annots[int(sleep_event_inds[0])]['onset'] - \
+        #         crop_wake_mins * 60
+        #     tmin = max(raw.times[0], tmin)
+        #     tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
+        #         crop_wake_mins * 60
+        #     tmax = min(tmax, raw.times[-1])
+        #     raw.crop(tmin=tmin, tmax=tmax)
 
-            # Crop raw
-            tmin = annots[int(sleep_event_inds[0])]['onset'] - \
-                crop_wake_mins * 60
-            tmin = max(raw.times[0], tmin)
-            tmax = annots[int(sleep_event_inds[-1])]['onset'] + \
-                crop_wake_mins * 60
-            tmax = min(tmax, raw.times[-1])
-            raw.crop(tmin=tmin, tmax=tmax)
-
-        basename = bids_path.basename
-        sub_nb = basename[4:]
-        desc = pd.Series({'subject': sub_nb, 'dataset': dataset})
+        if dataset != 'SleepPhysionet':
+            desc = pd.Series({'subject': bids_path.subject, 'dataset': dataset})
+        else:
+            desc = pd.Series({'subject': bids_path.subject, 'session': bids_path.session, 'dataset': dataset})
 
         return raw, desc

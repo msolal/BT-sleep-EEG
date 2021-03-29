@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 
 bids_root = '/storage/store2/data/mass-bids/SS3/'
 preproc_bids_root = (
-    '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/')
+    '/storage/store2/derivatives/mass/SS3/preprocessed/')
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -23,8 +23,9 @@ def preprocess_and_save(bids_path, l_freq, h_freq, sfreq):
     raw = read_raw_bids(bids_path=bids_path)
     # Preprocessing
     raw.load_data()
-    # raw.resample(sfreq=sfreq, npad='auto')
+    raw.resample(sfreq=sfreq, npad='auto')
     raw.filter(l_freq=l_freq, h_freq=h_freq)
+    raw.apply_function(lambda x: x * 1e6, channel_wise=False, verbose=False)
 
     # Write new BIDS
 

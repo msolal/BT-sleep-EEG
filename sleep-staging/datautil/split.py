@@ -47,7 +47,7 @@ def train_valid_test_split(windows_dataset, shuffle=True, train=0.6, valid=0.2, 
 
 
 def split_by_events(windows_dataset, train_test=None):
-    if train_test is None: 
+    if train_test is None:
         n_events_per_subject = [len(ds.windows.events) for ds in windows_dataset.datasets]
         index_subjects = list(np.argsort(n_events_per_subject))
         folds = [index_subjects[i::5] for i in range(4)]

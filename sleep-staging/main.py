@@ -76,7 +76,7 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
+# preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq

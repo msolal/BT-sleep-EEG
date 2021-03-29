@@ -4,8 +4,8 @@ import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids
 from tempfile import NamedTemporaryFile
 
-bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
-preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/4channels/'
+bids_root = '/storage/store2/derivatives/MASS/SS3/100Hz/'
+preproc_bids_root = '/storage/store2/derivatives/MASS/SS3/4channels-eeg_eog_emg/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -67,5 +67,5 @@ def preprocess_and_save(bids_path):
         write_raw_bids(raw, preproc_bids_path, overwrite=True)
 
 
-for bids_path in bids_paths:
+for bids_path in bids_paths[42:]:
     preprocess_and_save(bids_path)

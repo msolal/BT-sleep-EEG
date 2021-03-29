@@ -3,8 +3,8 @@ import pandas as pd
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids
 from tempfile import NamedTemporaryFile
 
-bids_root = '/storage/store2/data/SleepPhysionet-bids/derivatives/preprocessed/'
-preproc_bids_root = '/storage/store2/data/SleepPhysionet-bids/derivatives/4channels/'
+bids_root = '/storage/store2/derivatives/MASS/SS3/100Hz/'
+preproc_bids_root = '/storage/store2/derivatives/MASS/SS3/9channels-eeg_eog_emg/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
@@ -18,7 +18,11 @@ bids_paths = [BIDSPath(subject=subject, root=bids_root,
 
 def preprocess_and_save(bids_path):
     raw = read_raw_bids(bids_path=bids_path)
-    raw.pick_channels(['Fpz-Cz', 'Pz-Oz', 'EOG horizontal', 'EMG submental'])
+    raw.pick_channels(['F3', 'F4', 'C3', 'C4', 'O1', 'O2',
+                       'EOG Right Horiz', 'EOG Left Horiz',
+                       'EMG Chin1'], ordered=True)
+    raw.load_data()
+    raw.set_eeg_reference('average')
 
     # Write new BIDS
 
@@ -37,5 +41,5 @@ def preprocess_and_save(bids_path):
         write_raw_bids(raw, preproc_bids_path, overwrite=True)
 
 
-for bids_path in bids_paths:
+for bids_path in bids_paths[42:]:
     preprocess_and_save(bids_path)

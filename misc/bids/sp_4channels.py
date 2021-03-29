@@ -1,26 +1,25 @@
+import os
 import mne
 import pandas as pd
-from os.path import basename
-from mne_bids import BIDSPath, read_raw_bids, write_raw_bids 
+from mne_bids import BIDSPath, read_raw_bids, write_raw_bids
 from tempfile import NamedTemporaryFile
 
-bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/preprocessed/'
-preproc_bids_root = '/storage/store2/data/mass-bids/SS3/derivatives/9channels/'
+bids_root = '/storage/store2/derivatives/Physionet/preprocessed/'
+preproc_bids_root = '/storage/store2/derivatives/Physionet/4channels-eeg_eog_emg/'
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',
-                    delimiter='\t', skiprows=1,
-                    names=['participant_id', 'age', 'sex', 'hand'],
-                    engine='python')['participant_id'].transform(
+                      delimiter='\t', skiprows=1,
+                      names=['participant_id', 'age', 'sex', 'hand'],
+                      engine='python')['participant_id'].transform(
                         lambda x: x[4:]).tolist()
 bids_paths = [BIDSPath(subject=subject, root=bids_root,
                        datatype=datatype) for subject in all_sub]
 
+
 def preprocess_and_save(bids_path):
     raw = read_raw_bids(bids_path=bids_path)
-    raw.pick_channels(['F3', 'F4', 'C3', 'C4', 'O1', 'O2', 'EOG Right Horiz' 'EOG Left Horiz', 'EMG Chin1'], ordered=True)
-    raw.load_data()
-    raw.set_eeg_reference('average')
+    raw.pick_channels(['Fpz-Cz', 'Pz-Oz', 'EOG horizontal', 'EMG submental'])
 
     # Write new BIDS
 
@@ -36,8 +35,11 @@ def preprocess_and_save(bids_path):
         fname = f.name
         raw.save(fname, overwrite=True)
         raw = mne.io.read_raw_fif(fname, preload=False)
-        write_raw_bids(raw, preproc_bids_path, overwrite=True)
+        write_raw_bids(raw, preproc_bids_path, overwrite=True, verbose=False)
 
 
 for bids_path in bids_paths:
-    preprocess_and_save(bids_path)
+    sessions = os.listdir(f'{bids_path.root}/sub-{bids_path.subject}')
+    for session in sessions:
+        bids_path.update(session=session[4:])
+        preprocess_and_save(bids_path)

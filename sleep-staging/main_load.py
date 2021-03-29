@@ -28,10 +28,8 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
 
-# datasets = ['Clinical', 'MASS_SS3']
-# derivatives = ['6channels', '6channels']
-datasets = ['SleepPhysionet', 'MASS_SS3']
-derivatives = ['4channels', '4channels']
+datasets = ['MASS', 'SP']
+derivatives = ['4ch', '4ch']
 sizes = [48, 12]
 
 sfreq = 100
@@ -43,7 +41,7 @@ batch_size = 8
 print_datasets = f'{datasets[0]}_{datasets[1]}_{derivatives[0]}'
 print_sizes = f'{sizes[0]}_{sizes[1]}'
 
-plots_path = f'plots/recent/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+plots_path = f'plots/29-03/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 train_desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
 models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
 # models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
@@ -65,7 +63,7 @@ print(dataset.description)
 # %%
 # 2. Preprocessing
 
-preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
+# preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq
