@@ -53,10 +53,9 @@ try:
 except FileExistsError:
     print(f'Directory {plots_path} already exists\n')
 
-dataset = BaseConcatDataset([BIDS(dataset=datasets[i],
-                                  derivatives=derivatives[i],
-                                  subject_ids=sizes[i])
-                            for i in range(len(datasets))])
+dataset = BIDS(dataset=datasets[0],
+               derivatives=derivatives[0],
+               subject_ids=sizes[0])
 print(dataset.description)
 
 # %%
