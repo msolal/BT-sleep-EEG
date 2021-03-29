@@ -39,7 +39,8 @@ class BIDS(BaseConcatDataset):
 
         derivatives_mapping = {'4ch': '4channels-eeg_eog_emg',
                                'preproc': 'preprocessed',
-                               '9ch': '9channels-eeg_eog_emg'}
+                               '9ch': '9channels-eeg_eog_emg', 
+                               '100': '100Hz'}
         deriv = derivatives_mapping[derivatives]
 
         bids_root = f'{ds}{deriv}/'
@@ -82,6 +83,12 @@ class BIDS(BaseConcatDataset):
             bids_path.update(session=session)
 
         raw = read_raw_bids(bids_path=bids_path, verbose=False)
+        raw.pick_types(eeg=True, emg=True, eog=True, ecg=True)
+        try:
+            raw.drop_channels(['A2'])
+        except ValueError:
+            print('No A2 channel.')
+    
         if load_eeg_only:
             raw.pick_types(eeg=True)
 

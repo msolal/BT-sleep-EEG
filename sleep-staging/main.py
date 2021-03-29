@@ -33,15 +33,10 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage 3/4': 3,
            'Sleep stage 4': 3,
            'Sleep stage R': 4}
-classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'R'}
+classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'R'}
 
-# datasets = ['Clinical', 'MASS_SS3']
-# derivatives = ['6channels', '6channels']
-# # datasets = ['MASS_SS3', 'SleepPhysionet']
-# sizes = [48, 12]
-# datasets = ['MASS_SS3']
-datasets = ['Clinical']
-derivatives = ['6channels']
+datasets = ['MASS']
+derivatives = ['100']
 sizes = [60]
 train_test_diff = True if len(datasets) > 1 else False
 
@@ -56,7 +51,7 @@ print_datasets = (f'{datasets[0]}_{datasets[1]}'
 print_sizes = (f'{sizes[0]}_{sizes[1]}' if train_test_diff
                else str(sizes[0]))
 
-plots_path = f'plots/clean_6channels/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
+plots_path = f'plots/29-03/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 
 # %%
 # 1. Loading the data
