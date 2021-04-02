@@ -40,7 +40,8 @@ class BIDS(BaseConcatDataset):
         derivatives_mapping = {'4ch': '4channels-eeg_eog_emg',
                                'preproc': 'preprocessed',
                                '9ch': '9channels-eeg_eog_emg', 
-                               '100': '100Hz'}
+                               '100': '100Hz', 
+                               '9chc': '9channels'}
         deriv = derivatives_mapping[derivatives]
 
         bids_root = f'{ds}{deriv}/'
