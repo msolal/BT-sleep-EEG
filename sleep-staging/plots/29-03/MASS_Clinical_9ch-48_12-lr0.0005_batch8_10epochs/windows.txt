@@ -4,9 +4,9 @@ Training set: None
 
 Validation set: None
 
-Test set: 14687 events: 
-Sleep stage 1: 913
-Sleep stage 2: 4668
-Sleep stage 3: 1889
-Sleep stage R: 2103
-Sleep stage W: 5114
+Test set: 11624 events: 
+Sleep stage 1: 389
+Sleep stage 2: 4094
+Sleep stage 3: 1702
+Sleep stage R: 1879
+Sleep stage W: 3560
