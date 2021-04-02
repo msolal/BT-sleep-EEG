@@ -28,7 +28,7 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
 
-datasets = ['Clinical', 'MASS']
+datasets = ['Clinical', 'Clinical']
 derivatives = ['9ch', '9ch']
 sizes = [48, 12]
 
@@ -43,8 +43,8 @@ print_sizes = f'{sizes[0]}_{sizes[1]}'
 
 plots_path = f'plots/29-03/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
 train_desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
-models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
-# models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
+# models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
+models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
 
 # %%
 # 1. Loading the data
@@ -107,6 +107,6 @@ conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
 plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
 print(conf_mat)
 
-class_report = classification_report(y_true, y_pred)
+class_report = classification_report(y_true, y_pred, zero_division=1)
 plot_classification_report(plots_path, class_report, classes_mapping)
 print(class_report)

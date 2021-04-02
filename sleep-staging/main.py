@@ -158,6 +158,6 @@ conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
 plot_confusion_matrix(plots_path, conf_mat, classes_mapping)
 print(conf_mat)
 
-class_report = classification_report(y_true, y_pred)
+class_report = classification_report(y_true, y_pred, zero_division=1)
 plot_classification_report(plots_path, class_report, classes_mapping)
 print(class_report)
