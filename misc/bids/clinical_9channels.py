@@ -18,11 +18,11 @@ bids_paths = [BIDSPath(subject=subject, root=bids_root,
 
 def preprocess_and_save(bids_path):
     raw = read_raw_bids(bids_path=bids_path)
+    eog_raw = raw.copy().pick_types(eog=True).load_data()
     try: 
         raw.pick_channels(['F3', 'F4', 'C3', 'C4', 'O1', 'O2', 'EMG Ment'], ordered=True)
     except ValueError:
         raw.pick_channels(['F3', 'F4', 'C3', 'C4', 'O1', 'O2', 'EMG Chin1'], ordered=True)
-    eog_raw = raw.copy().pick_types(eog=True).load_data()
     raw.load_data()
     raw.add_channels([eog_raw])
     raw.set_eeg_reference('average')

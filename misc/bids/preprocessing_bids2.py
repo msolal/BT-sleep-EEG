@@ -8,9 +8,9 @@ from tempfile import NamedTemporaryFile
 from mne_bids import BIDSPath, read_raw_bids, write_raw_bids
 
 
-bids_root = '/storage/store2/data/mass-bids/SS3/'
+bids_root = '/media/pallanca/datapartition/maelys/data/BIDS/'
 preproc_bids_root = (
-    '/storage/store2/derivatives/MASS/SS3/100Hz/')
+    '/media/pallanca/datapartition/maelys/data/BIDS/derivatives/100Hz')
 datatype = 'eeg'
 
 all_sub = pd.read_csv(bids_root + 'participants.tsv',

@@ -30,8 +30,8 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
 
-datasets = ['MASS']
-derivatives = ['9ch']
+datasets = ['Clinical']
+derivatives = ['9chc']
 sizes = [48]
 
 sfreq = 100
@@ -42,7 +42,8 @@ batch_size = 8
 
 desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
 plots_path = f'plots/29-03/{desc}/'
-models_path = f'/storage/store2/work/msolal/trained_models/{desc}'
+models_path = f'/media/pallanca/datapartition/maelys/trained_models/{desc}'
+# models_path = f'/storage/store2/work/msolal/trained_models/{desc}'
 
 # %%
 # 1. Loading the data
