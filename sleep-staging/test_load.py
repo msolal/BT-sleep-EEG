@@ -15,6 +15,11 @@ from sklearn.metrics import (confusion_matrix, classification_report,
 from visualisation.results import (save_score, plot_confusion_matrix,
                                    plot_history, plot_classification_report)
 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+cmap = sns.cubehelix_palette(50)
 
 # %%
 # 0b. Setting all the constants
@@ -102,10 +107,24 @@ save_score(plots_path, test_bal_acc, test_kappa)
 
 plot_history(plots_path, clf)
 
+# %%
 # Finally, we also display the confusion matrix and classification report
 conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
-print(conf_mat)
+confusion_df = pd.DataFrame(conf_mat, columns=classes_mapping.values(),
+                            index=classes_mapping.values())
+# %%
+plt.figure()
+ax = sns.heatmap(confusion_df, annot=True, fmt='.2f',
+                 cmap=cmap, linewidths=.01, square=True)
+ax.set(xlabel='Predicted Labels', ylabel='True Labels')
+ax.tick_params(left=False, bottom=False)
+plt.yticks(rotation=0)
+plt.title('Confusion matrix')
+plt.savefig(plots_path + 'confusion_matrix_norm', facecolor='w')
 
+# %%
 class_report = classification_report(y_true, y_pred, zero_division=1)
 plot_classification_report(plots_path, class_report, classes_mapping)
 print(class_report)
+
+# %%
