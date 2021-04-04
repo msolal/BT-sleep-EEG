@@ -22,8 +22,6 @@ import matplotlib.pyplot as plt
 cmap = sns.cubehelix_palette(50)
 
 # %%
-# 0b. Setting all the constants
-
 mapping = {'Sleep stage W': 0,
            'Sleep stage 1': 1,
            'Sleep stage 2': 2,
@@ -33,9 +31,8 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage R': 4}
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
 
-datasets = ['MASS', 'MASS']
-derivatives = ['9ch', '9ch']
-sizes = [48, 12]
+# %%
+train_valid = ['MASS', '4ch', 48]
 
 sfreq = 100
 window_size_s = 30
@@ -43,32 +40,21 @@ lr = 5e-4           # lr can be 5e-4 or 1e-3
 n_epochs = 10
 batch_size = 8
 
-print_datasets = f'{datasets[0]}_{datasets[1]}_{derivatives[0]}'
-print_sizes = f'{sizes[0]}_{sizes[1]}'
-
-plots_path = f'plots/visual/{print_datasets}-{print_sizes}-lr{lr}_batch{batch_size}_{n_epochs}epochs/'
-train_desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
+plots_path = f'plots/report/'
+train_desc = f'{train_valid[0]}_{train_valid[1]}-{train_valid[2]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
 models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
-# models_path = '/media/pallanca/datapartition/maelys/trained_models/' + train_desc
 
 # %%
-# 1. Loading the data
-
-try:
-    os.mkdir(plots_path)
-    print(f'Directory {plots_path} created\n')
-except FileExistsError:
-    print(f'Directory {plots_path} already exists\n')
-
-dataset = BIDS(dataset=datasets[1],
-               derivatives=derivatives[1],
-               subject_ids=sizes[1])
-print(dataset.description)
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+clf = torch.load(models_path, map_location=torch.device(device))
 
 # %%
-# 2. Preprocessing
+test = ['SP', '4ch', 12]
+plots_name = 'mass-sp-4ch'
 
-# preprocess(dataset, [NumpyPreproc(fn=lambda x: x * 1e6)])
+dataset = BIDS(dataset=test[0],
+               derivatives=test[1],
+               subject_ids=test[2])
 
 # Extracting windows
 window_size_samples = window_size_s * sfreq
@@ -78,53 +64,63 @@ windows_dataset = create_windows_from_events(
     window_stride_samples=window_size_samples, preload=True, mapping=mapping)
 # Window preprocessing
 preprocess(windows_dataset, [MNEPreproc(fn=zscore)])
-
-# %%
-# 3. Making train, valid and test splits
-
 test_set = windows_dataset
-print(view_nb_windows(plots_path, None, None, test_set))
-
-# %%
-# 4. Loading the model
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-clf = torch.load(models_path, map_location=torch.device(device))
-
-# %%
-# 5. Testing
 
 y_true = np.concatenate(
     tuple([test_set.datasets[i].windows.metadata['target'].values
            for i in range(len(test_set.datasets))]))
 y_pred = clf.predict(test_set)
 
-# %%
-# 6. Visualising results
 test_bal_acc = balanced_accuracy_score(y_true, y_pred)
 test_kappa = cohen_kappa_score(y_true, y_pred)
-save_score(plots_path, test_bal_acc, test_kappa)
+print(f'Balanced accuracy: {test_bal_acc}\nKappa score: {test_kappa}')
 
-plot_history(plots_path, clf)
-
-# %%
-# Finally, we also display the confusion matrix and classification report
 conf_mat = confusion_matrix(y_true, y_pred, normalize='true')
 confusion_df = pd.DataFrame(conf_mat, columns=classes_mapping.values(),
                             index=classes_mapping.values())
-# %%
 plt.figure()
 ax = sns.heatmap(confusion_df, annot=True, fmt='.2f',
-                 cmap=cmap, linewidths=.01, square=True)
-ax.set(xlabel='Predicted Labels', ylabel='True Labels')
-ax.tick_params(left=False, bottom=False)
+                 cmap=cmap, linewidths=.01, square=True, cbar=False,
+                 annot_kws={"size": 14})
 plt.yticks(rotation=0)
-plt.title('Confusion matrix')
-plt.savefig(plots_path + 'confusion_matrix_norm', facecolor='w')
+plt.savefig(plots_path + 'conf_mat/' + plots_name, facecolor='w')
 
-# %%
 class_report = classification_report(y_true, y_pred, zero_division=1)
-plot_classification_report(plots_path, class_report, classes_mapping)
-print(class_report)
+class_report = class_report.replace('\n\n', '\n')
+class_report = class_report.replace(' / ', '/')
+lines = class_report.split('\n')
+
+classes, values_matrix, support, mask_matrix = [], [], [], []
+for line in lines[1:-1]:
+    splitted_line = line.strip().split()
+    support.append(int(splitted_line[-1]))
+    if len(splitted_line) == 3:
+        classes.append(splitted_line[0])
+        values = [0, 0, float(splitted_line[1])]
+        mask = [True, True, False]
+    elif len(splitted_line) > 5:
+        classes.append(splitted_line[0]+'_'+splitted_line[1])
+        values = [float(x) for x in splitted_line[2: -1]]
+        mask = [False, False, False]
+    else:
+        classes.append(splitted_line[0])
+        values = [float(x) for x in splitted_line[1: -1]]
+        mask = [False, False, False]
+    values_matrix.append(values)
+    mask_matrix.append(mask)
+
+values_matrix = np.array(values_matrix)
+mask_matrix = np.array(mask_matrix)
+xlabels = ['Precision', 'Recall', 'F1-score']
+ylabels = ['{} ({})'.format(classes_mapping[idx] if idx in classes_mapping else idx, sup)
+                for idx, sup in zip(classes, support)]
+
+report_df = pd.DataFrame(values_matrix, columns=xlabels, index=ylabels)
+plt.figure()
+ax = sns.heatmap(report_df, annot=True, cmap=cmap, linewidths=.01, square=True,
+                 mask=mask_matrix, cbar=False)
+ax.tick_params(left=False, bottom=False)
+
+plt.savefig(plots_path + 'class_report/' + plots_name, facecolor='w')
 
 # %%
