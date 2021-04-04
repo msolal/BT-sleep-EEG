@@ -32,7 +32,7 @@ mapping = {'Sleep stage W': 0,
 classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'REM'}
 
 # %%
-train_valid = ['MASS', '4ch', 48]
+train_valid = ['Clinical', '9ch', 48]
 
 sfreq = 100
 window_size_s = 30
@@ -42,6 +42,7 @@ batch_size = 8
 
 plots_path = f'plots/report/'
 train_desc = f'{train_valid[0]}_{train_valid[1]}-{train_valid[2]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
+# models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
 models_path = '/storage/store2/work/msolal/trained_models/' + train_desc
 
 # %%
@@ -49,8 +50,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 clf = torch.load(models_path, map_location=torch.device(device))
 
 # %%
-test = ['MASS', '4ch', 12]
-plots_name = 'mass-mass-4ch'
+test = ['MASS', '9ch', 12]
+plots_name = 'clin-mass'
 
 dataset = BIDS(dataset=test[0],
                derivatives=test[1],
