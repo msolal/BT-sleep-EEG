@@ -26,10 +26,10 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage 3/4': 3,
            'Sleep stage 4': 3,
            'Sleep stage R': 4}
-classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
+classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'REM'}
 
-datasets = ['MASS', 'MASS']
-derivatives = ['9ch', '9ch']
+datasets = ['MASS', 'SP']
+derivatives = ['4ch', '4ch']
 sizes = [48, 12]
 
 sfreq = 100

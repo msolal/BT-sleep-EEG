@@ -28,7 +28,7 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage 3/4': 3,
            'Sleep stage 4': 3,
            'Sleep stage R': 4}
-classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
+classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'REM'}
 
 # mapping = {'Sleep stage W': 0,
 #            'Sleep stage 1': 1,
@@ -38,7 +38,7 @@ classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
 #            'Sleep stage R': 5}
 # classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'N4', '5': 'REM'}
 
-datasets = ['SP']
+datasets = ['MASS']
 derivatives = ['4ch']
 sizes = [48]
 
@@ -48,8 +48,8 @@ lr = 5e-4           # lr can be 5e-4 or 1e-3
 n_epochs = 10
 batch_size = 8
 
-desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-6classes-lr{lr}_batch{batch_size}_{n_epochs}epochs'
-plots_path = f'plots/SleepPhysionet/{desc}/'
+desc = f'{datasets[0]}_{derivatives[0]}-{sizes[0]}-lr{lr}_batch{batch_size}_{n_epochs}epochs'
+plots_path = f'plots/visual/{desc}/'
 # models_path = f'/media/pallanca/datapartition/maelys/trained_models/{desc}'
 models_path = f'/storage/store2/work/msolal/trained_models/{desc}'
 
@@ -96,7 +96,7 @@ device = 'cuda' if cuda else 'cpu'
 if cuda:
     torch.backends.cudnn.benchmark = True
 
-n_classes = 6
+n_classes = 5
 n_channels = train_set[0][0].shape[0]
 input_size_samples = train_set[0][0].shape[1]
 

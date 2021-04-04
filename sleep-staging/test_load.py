@@ -29,7 +29,7 @@ mapping = {'Sleep stage W': 0,
            'Sleep stage 3/4': 3,
            'Sleep stage 4': 3,
            'Sleep stage R': 4}
-classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3 / N4', '4': 'REM'}
+classes_mapping = {'0': 'W', '1': 'N1', '2': 'N2', '3': 'N3', '4': 'REM'}
 
 # %%
 train_valid = ['MASS', '4ch', 48]
@@ -49,8 +49,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 clf = torch.load(models_path, map_location=torch.device(device))
 
 # %%
-test = ['SP', '4ch', 12]
-plots_name = 'mass-sp-4ch'
+test = ['MASS', '4ch', 12]
+plots_name = 'mass-mass-4ch'
 
 dataset = BIDS(dataset=test[0],
                derivatives=test[1],
