@@ -24,6 +24,3 @@ My **report** is available as a pdf under `SOLAL_BT_Sleep_EEG_Report.pdf` and th
 My **slides** are available as a pdf under `SOLAL_BT_Sleep_EEG_Defense.pdf` and the tex source code is in the folder `SOLAL BT Sleep EEG Defense`.
 
 There also slides for my **lightning talk** (given to the Parietal team) and my **logbook** where I referenced my work throughout the weeks, which I left mainly as a reference for myself.
-
-I am available for any questions about my work by email, at maelysolal@gmail.com
-
